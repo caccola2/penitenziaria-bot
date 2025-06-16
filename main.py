@@ -86,18 +86,16 @@ async def attivita(
 async def check(interaction: discord.Interaction):
     await interaction.response.send_message("Il bot funziona porcodio 🐷⚡", ephemeral=True)
 
-# ✅ Comando /promozione-operatore
+# ✅ Comando /promozione-operatore (versione automatica con utente + emoji)
 class PromozioneForm(ui.Modal, title="📈 Form Promozione Operatore"):
 
     qualifica_operatore = ui.TextInput(label="Qualifica Operatore", style=TextStyle.short)
-    emoji_qualifica = ui.TextInput(label="Testo per emoji qualifica", style=TextStyle.short)
     nuova_qualifica = ui.TextInput(label="Qualifica da attestare", style=TextStyle.short)
-    emoji_promozione = ui.TextInput(label="Testo per emoji qualifica promozione", style=TextStyle.short)
     motivazione = ui.TextInput(label="Motivazione promozione (opzionale)", style=TextStyle.paragraph, required=False)
 
-    def __init__(self, operatore_nome: str):
+    def __init__(self, utente: discord.Member):
         super().__init__()
-        self.operatore_nome = operatore_nome
+        self.utente = utente
 
     async def on_submit(self, interaction: Interaction):
         canale = interaction.client.get_channel(899561903448260628)
@@ -108,18 +106,29 @@ class PromozioneForm(ui.Modal, title="📈 Form Promozione Operatore"):
             else "a seguito del superamento dei requisiti necessari per tale qualifica."
         )
 
+        # Trova emoji più simili alla qualifica
+        def trova_emoji(nome):
+            nome = nome.lower().replace(" ", "")
+            for emoji in interaction.guild.emojis:
+                if nome in emoji.name.lower().replace("_", ""):
+                    return str(emoji)
+            return ""
+
+        emoji_qualifica = trova_emoji(self.qualifica_operatore.value)
+        emoji_promozione = trova_emoji(self.nuova_qualifica.value)
+
         messaggio = (
-            f"> **{self.qualifica_operatore.value}** {self.emoji_qualifica.value} "
-            f"**{self.operatore_nome}** viene promosso alla qualifica di "
-            f"**{self.nuova_qualifica.value}** {self.emoji_promozione.value} {motivazione}"
+            f"> **{self.qualifica_operatore.value}** {emoji_qualifica} "
+            f"{self.utente.mention} viene promosso alla qualifica di "
+            f"**{self.nuova_qualifica.value}** {emoji_promozione} {motivazione}"
         )
 
         await canale.send(messaggio)
         await interaction.response.send_message("✅ Promozione inviata con successo!", ephemeral=True)
 
 @bot.tree.command(name="promozione-operatore", description="Promuovi un operatore compilando il form.")
-@app_commands.describe(operatore="Nome dell'operatore da promuovere")
-async def promozione_operatore(interaction: Interaction, operatore: str):
+@app_commands.describe(utente="Utente da promuovere")
+async def promozione_operatore(interaction: Interaction, utente: discord.Member):
     ruoli_autorizzati = [819251679081791498, 896679736418381855, 815496510653333524]
     user_roles = [role.id for role in interaction.user.roles]
 
@@ -127,6 +136,7 @@ async def promozione_operatore(interaction: Interaction, operatore: str):
         await interaction.response.send_message("❌ Non hai i permessi per usare questo comando.", ephemeral=True)
         return
 
+    await interaction.response.send_modal(PromozioneForm(utente=utente))
     await interaction.response.send_modal(PromozioneForm(operatore_nome=operatore))
 
 # 🔁 Avvio del bot
