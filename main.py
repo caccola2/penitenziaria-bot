@@ -1,6 +1,11 @@
+import os
+import discord
+from discord.ext import commands
+from discord import app_commands
 from flask import Flask
 from threading import Thread
 
+# Web server per mantenere attivo il bot su Render
 app = Flask('')
 
 @app.route('/')
@@ -15,15 +20,11 @@ def run():
 
 Thread(target=run).start()
 
-
-import discord
-from discord.ext import commands
-from discord import app_commands
-
+# Impostazioni del bot
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
-intents.members = True  # <-- NECESSARIO se usi i ruoli
+intents.members = True  # richiesto per leggere i ruoli
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
@@ -61,21 +62,9 @@ async def attivita(
         color=discord.Color.from_str("#1e1f3f")
     )
 
-    embed.add_field(
-        name="🎯 Attività o evento",
-        value=f"> {attivita if attivita else '*Non specificato*'}",
-        inline=False
-    )
-    embed.add_field(
-        name="📍 Luogo di incontro",
-        value=f"> {luogo if luogo else '*Non specificato*'}",
-        inline=False
-    )
-    embed.add_field(
-        name="🕒 Data e orario",
-        value=f"> {data_orario if data_orario else '*Non specificato*'}",
-        inline=False
-    )
+    embed.add_field(name="🎯 Attività o evento", value=f"> {attivita}", inline=False)
+    embed.add_field(name="📍 Luogo di incontro", value=f"> {luogo}", inline=False)
+    embed.add_field(name="🕒 Data e orario", value=f"> {data_orario}", inline=False)
     embed.add_field(
         name="✅ Presenza",
         value="*Reagite alla reazione per segnare la presenza.*\n"
@@ -94,6 +83,10 @@ async def attivita(
 
     await interaction.response.send_message("Attività programmata inviata con successo!", ephemeral=True)
 
-import os
-bot.run(os.getenv("DISCORD_TOKEN"))
+# ✅ Comando /check per verifica stato bot
+@bot.tree.command(name="check", description="Verifica se il bot è online.")
+async def check(interaction: discord.Interaction):
+    await interaction.response.send_message("Il bot funziona porcodio 🐷⚡", ephemeral=True)
 
+# Avvio del bot
+bot.run(os.getenv("DISCORD_TOKEN"))
