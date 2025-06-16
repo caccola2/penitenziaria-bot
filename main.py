@@ -5,14 +5,11 @@ from discord import app_commands
 from flask import Flask
 from threading import Thread
 
-# Web server per mantenere attivo il bot su Render
+# Server web per Render
 app = Flask('')
 
 @app.route('/')
 def home():
-    import asyncio
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
     return "Bot attivo."
 
 def run():
@@ -20,11 +17,11 @@ def run():
 
 Thread(target=run).start()
 
-# Impostazioni del bot
+# Impostazioni Discord
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
-intents.members = True  # richiesto per leggere i ruoli
+intents.members = True  # per leggere i ruoli
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
@@ -35,7 +32,7 @@ async def on_ready():
         synced = await bot.tree.sync()
         print(f"Comandi slash sincronizzati: {len(synced)}")
     except Exception as e:
-        print(f"Errore durante la sincronizzazione dei comandi slash: {e}")
+        print(f"Errore sincronizzazione comandi slash: {e}")
     print(f"Bot connesso come {bot.user}")
 
 @bot.tree.command(name="attivita-istituzionale", description="Invia un'attività programmata.")
@@ -83,12 +80,10 @@ async def attivita(
 
     await interaction.response.send_message("Attività programmata inviata con successo!", ephemeral=True)
 
-# ✅ Comando /check per verifica stato bot
+# Comando di test
 @bot.tree.command(name="check", description="Verifica se il bot è online.")
 async def check(interaction: discord.Interaction):
     await interaction.response.send_message("Il bot funziona porcodio 🐷⚡", ephemeral=True)
 
-# Avvio del bot
+# Avvio del bot con token da variabile ambiente
 bot.run(os.getenv("DISCORD_TOKEN"))
-
-print("DEBUG: avvio riuscito")
