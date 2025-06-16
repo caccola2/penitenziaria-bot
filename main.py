@@ -90,3 +90,5 @@ async def check(interaction: discord.Interaction):
 
 # Avvio del bot
 bot.run(os.getenv("DISCORD_TOKEN"))
+
+print("DEBUG: avvio riuscito")
