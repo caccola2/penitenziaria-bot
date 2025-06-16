@@ -120,7 +120,8 @@ class PromozioneForm(ui.Modal, title="📈 Form Promozione Operatore"):
         messaggio = (
             f"> **{self.qualifica_operatore.value}** {emoji_qualifica} "
             f"{self.utente.mention} viene promosso alla qualifica di "
-            f"**{self.nuova_qualifica.value}** {emoji_promozione} {motivazione}"
+            f"**{self.nuova_qualifica.value}** {emoji_promozione} {motivazione}\n\n"
+            f"*Promosso da: {interaction.user.mention}*"
         )
 
         await canale.send(messaggio)
@@ -137,7 +138,6 @@ async def promozione_operatore(interaction: Interaction, utente: discord.Member)
         return
 
     await interaction.response.send_modal(PromozioneForm(utente=utente))
-    await interaction.response.send_modal(PromozioneForm(operatore_nome=operatore))
 
 # 🔁 Avvio del bot
 bot.run(os.getenv("DISCORD_TOKEN"))
