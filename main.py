@@ -4,15 +4,13 @@ from discord.ext import commands
 from discord import app_commands, ui, TextStyle, Interaction
 from flask import Flask
 from threading import Thread
+import unicodedata
 
 # 🌐 Web server per mantenere attivo il bot su Render
 app = Flask('')
 
 @app.route('/')
 def home():
-    import asyncio
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
     return "Bot attivo."
 
 def run():
@@ -86,7 +84,28 @@ async def attivita(
 async def check(interaction: discord.Interaction):
     await interaction.response.send_message("Il bot funziona porcodio 🐷⚡", ephemeral=True)
 
-# ✅ Comando /promozione-operatore (versione automatica con utente + emoji)
+# 🔍 Funzione ottimizzata per trovare l'emoji
+def trova_emoji(nome_qualifica, emoji_lista):
+    def normalizza(testo):
+        testo = testo.lower().replace(" ", "").replace("-", "")
+        testo = ''.join(c for c in unicodedata.normalize('NFD', testo) if unicodedata.category(c) != 'Mn')
+        return testo
+
+    nome_norm = normalizza(nome_qualifica)
+
+    # Match perfetto
+    for emoji in emoji_lista:
+        if nome_norm == normalizza(emoji.name):
+            return str(emoji)
+
+    # Match parziale
+    for emoji in emoji_lista:
+        if nome_norm in normalizza(emoji.name):
+            return str(emoji)
+
+    return ""  # Nessun match trovato
+
+# ✅ Comando /promozione-operatore
 class PromozioneForm(ui.Modal, title="📈 Form Promozione Operatore"):
 
     qualifica_operatore = ui.TextInput(label="Qualifica Operatore", style=TextStyle.short)
@@ -106,16 +125,8 @@ class PromozioneForm(ui.Modal, title="📈 Form Promozione Operatore"):
             else "a seguito del superamento dei requisiti necessari per tale qualifica."
         )
 
-        # Trova emoji più simili alla qualifica
-        def trova_emoji(nome):
-            nome = nome.lower().replace(" ", "")
-            for emoji in interaction.guild.emojis:
-                if nome in emoji.name.lower().replace("_", ""):
-                    return str(emoji)
-            return ""
-
-        emoji_qualifica = trova_emoji(self.qualifica_operatore.value)
-        emoji_promozione = trova_emoji(self.nuova_qualifica.value)
+        emoji_qualifica = trova_emoji(self.qualifica_operatore.value, interaction.guild.emojis)
+        emoji_promozione = trova_emoji(self.nuova_qualifica.value, interaction.guild.emojis)
 
         messaggio = (
             f"> **{self.qualifica_operatore.value}** {emoji_qualifica} "
