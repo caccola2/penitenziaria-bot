@@ -94,4 +94,5 @@ async def attivita(
 
     await interaction.response.send_message("Attività programmata inviata con successo!", ephemeral=True)
 
-bot.run("BOT_TOKEN_PLACEHOLDER")
+bot.run("MTM4MzkyNjM1MjQxNTAzNTQzMg.GwYFoE.SdWb23Gqaj6Qr3XHx_U8J2KJRuZbjMe0y2yHCw")
+
