@@ -165,7 +165,7 @@ class TrasferimentoForm(ui.Modal, title="🔄 Form Trasferimento Operatore"):
         self.utente = utente
 
     async def on_submit(self, interaction: Interaction):
-        canale = interaction.client.get_channel(899561903448260628)
+        canale = interaction.client.get_channel(791774585007767593)
         reparti = {
             "ntp": ("Nucleo Traduzioni e Piantonamenti", 922893733148635196),
             "sps": ("Servizio di Polizia Stradale", 819254117758664714)
