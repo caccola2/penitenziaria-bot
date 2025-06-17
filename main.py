@@ -6,7 +6,7 @@ from flask import Flask
 from threading import Thread
 import unicodedata
 
-# 🌐 Web server per mantenere attivo il bot su Render
+# 🌐 Web server per mantenerlo vivo su Render
 app = Flask('')
 
 @app.route('/')
@@ -18,7 +18,7 @@ def run():
 
 Thread(target=run).start()
 
-# ⚙️ Impostazioni bot
+# ✅ Configurazione base
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
@@ -31,188 +31,161 @@ async def on_ready():
     await bot.wait_until_ready()
     try:
         synced = await bot.tree.sync()
-        print(f"Comandi slash sincronizzati: {len(synced)}")
+        print(f"✅ Comandi sincronizzati: {len(synced)}")
     except Exception as e:
-        print(f"Errore durante la sincronizzazione dei comandi slash: {e}")
-    print(f"Bot connesso come {bot.user}")
+        print(f"❌ Sync error: {e}")
+    print(f"🤖 Bot connesso come {bot.user}")
 
-# 🔎 Trova emoji da nome ruolo ottimizzato
-def trova_emoji(nome_qualifica, emoji_lista):
-    def normalizza(testo):
-        testo = testo.lower().replace(" ", "").replace("-", "")
-        return ''.join(c for c in unicodedata.normalize('NFD', testo) if unicodedata.category(c) != 'Mn')
-    
-    nome_norm = normalizza(nome_qualifica)
+# 📦 Mappa reparti (nome completo e ID ruolo)
+REPARTI = {
+    "ntp": ("Nucleo Traduzioni e Piantonamenti", 922893733148635196),
+    "sps": ("Servizio di Polizia Stradale", 819254117758664714)
+}
 
-    for emoji in emoji_lista:
-        if nome_norm == normalizza(emoji.name):
-            return str(emoji)
+# 🔍 Emoji finder
+def trova_emoji(nome, emoji_lista):
+    def normalizza(t):
+        return ''.join(c for c in unicodedata.normalize('NFD', t.lower().replace(" ", "").replace("-", ""))
+                       if unicodedata.category(c) != 'Mn')
+    nome_norm = normalizza(nome)
     for emoji in emoji_lista:
         if nome_norm in normalizza(emoji.name):
             return str(emoji)
-    return ""
+    return "📦"
 
-# ✅ Comando /attivita-istituzionale
+# ✅ Comando /check
+@bot.tree.command(name="check", description="Verifica se il bot è online.")
+async def check(interaction: Interaction):
+    await interaction.response.send_message("✅ Il bot è online e funzionante.", ephemeral=True)
+
+# ✅ /attivita-istituzionale
 @bot.tree.command(name="attivita-istituzionale", description="Invia un'attività programmata.")
-@app_commands.describe(
-    attivita="Nome dell'attività o evento",
-    luogo="Luogo di incontro",
-    data_orario="Data e orario dell'incontro"
-)
-async def attivita(interaction: discord.Interaction, attivita: str, luogo: str, data_orario: str):
-    permessi = [819251679081791498, 815496510653333524]
-    user_roles = [role.id for role in interaction.user.roles]
-
-    if not any(role_id in user_roles for role_id in permessi):
-        await interaction.response.send_message("Non hai i permessi per usare questo comando.", ephemeral=True)
+@app_commands.describe(attivita="Nome evento", luogo="Luogo incontro", data_orario="Data e orario")
+async def attivita(interaction: Interaction, attivita: str, luogo: str, data_orario: str):
+    if not any(role.id in [819251679081791498, 815496510653333524] for role in interaction.user.roles):
+        await interaction.response.send_message("❌ Non hai i permessi.", ephemeral=True)
         return
 
     channel = bot.get_channel(904658463739772998)
-
-    embed = discord.Embed(
-        title="**<:PP:793201995041079317> | ATTIVITÀ PROGRAMMATA**",
-        color=discord.Color.from_str("#1e1f3f")
-    )
+    embed = discord.Embed(title="**<:PP:793201995041079317> | ATTIVITÀ PROGRAMMATA**", color=discord.Color.from_str("#1e1f3f"))
     embed.add_field(name="🎯 Attività o evento", value=f"> {attivita}", inline=False)
     embed.add_field(name="📍 Luogo di incontro", value=f"> {luogo}", inline=False)
     embed.add_field(name="🕒 Data e orario", value=f"> {data_orario}", inline=False)
-    embed.add_field(
-        name="✅ Presenza",
-        value="*Reagite alla reazione per segnare la presenza.*\n"
-              "*Informazioni più accurate su luogo e orario dell'evento verranno fornite appena disponibili.*",
-        inline=False
-    )
-    embed.set_footer(
-        text=f"Attività aperta da: {interaction.user.display_name}",
-        icon_url=interaction.user.display_avatar.url
-    )
+    embed.add_field(name="✅ Presenza", value="*Reagite per segnare la presenza.*", inline=False)
+    embed.set_footer(text=f"Attività aperta da: {interaction.user.display_name}", icon_url=interaction.user.display_avatar.url)
 
-    sent_message = await channel.send(embed=embed)
-    await sent_message.add_reaction("✅")
+    msg = await channel.send(embed=embed)
+    await msg.add_reaction("✅")
     await channel.send("||<@&791772896736313371>||")
-    await interaction.response.send_message("Attività programmata inviata con successo!", ephemeral=True)
+    await interaction.response.send_message("✅ Attività programmata inviata!", ephemeral=True)
 
-# ✅ /check
-@bot.tree.command(name="check", description="Verifica se il bot è online.")
-async def check(interaction: discord.Interaction):
-    await interaction.response.send_message("✅ Il bot è online!", ephemeral=True)
-
-# ✅ PROMOZIONE OPERATORE
+# ✅ Promozione
 class PromozioneForm(ui.Modal, title="📈 Promozione Operatore"):
-    qualifica_operatore = ui.TextInput(label="Qualifica Operatore", style=TextStyle.short)
-    nuova_qualifica = ui.TextInput(label="Qualifica da attestare", style=TextStyle.short)
+    qualifica_attuale = ui.TextInput(label="Qualifica Attuale", style=TextStyle.short)
+    qualifica_nuova = ui.TextInput(label="Qualifica da Attestare", style=TextStyle.short)
     motivazione = ui.TextInput(label="Motivazione (opzionale)", style=TextStyle.paragraph, required=False)
 
-    def __init__(self, utente: discord.Member):
+    def __init__(self, utente):
         super().__init__()
         self.utente = utente
 
     async def on_submit(self, interaction: Interaction):
-        canale = interaction.client.get_channel(899561903448260628)
-        guild = interaction.guild
+        emoji_att = trova_emoji(self.qualifica_attuale.value, interaction.guild.emojis)
+        emoji_nuova = trova_emoji(self.qualifica_nuova.value, interaction.guild.emojis)
 
         motivazione = self.motivazione.value.strip() or "a seguito del superamento dei requisiti necessari per tale qualifica."
 
-        emoji_qualifica = trova_emoji(self.qualifica_operatore.value, guild.emojis)
-        emoji_promozione = trova_emoji(self.nuova_qualifica.value, guild.emojis)
-
-        ruolo_attuale = discord.utils.find(lambda r: r.name.lower() == self.qualifica_operatore.value.lower(), guild.roles)
-        ruolo_nuovo = discord.utils.find(lambda r: r.name.lower() == self.nuova_qualifica.value.lower(), guild.roles)
-
-        if ruolo_attuale:
-            await self.utente.remove_roles(ruolo_attuale)
-        if ruolo_nuovo:
-            await self.utente.add_roles(ruolo_nuovo)
-
-        messaggio = (
-            f"> **{self.qualifica_operatore.value}** {emoji_qualifica} "
-            f"{self.utente.mention} viene promosso alla qualifica di "
-            f"**{self.nuova_qualifica.value}** {emoji_promozione} {motivazione}\n\n"
-            f"*Promosso da: {interaction.user.mention}*"
+        embed = discord.Embed(
+            description=(
+                f"> **{self.qualifica_attuale.value}** {emoji_att} {self.utente.mention} viene promosso a "
+                f"**{self.qualifica_nuova.value}** {emoji_nuova} {motivazione}\n\n"
+                f"*Promosso da: {interaction.user.mention}*"
+            ),
+            color=discord.Color.green()
         )
 
-        await canale.send(messaggio)
+        canale = interaction.client.get_channel(791774585007767593)
+        await canale.send(embed=embed)
+
         try:
-            await self.utente.send(f"📢 Sei stato promosso a **{self.nuova_qualifica.value}**!\n{motivazione}")
+            await self.utente.send(embed=embed)
         except:
             pass
 
-        await interaction.response.send_message("✅ Promozione registrata!", ephemeral=True)
+        await interaction.response.send_message("✅ Promozione eseguita.", ephemeral=True)
 
-@bot.tree.command(name="promozione-operatore", description="Promuovi un operatore.")
+@bot.tree.command(name="promozione-operatore", description="Promuovi un operatore compilando un form.")
 @app_commands.describe(utente="Utente da promuovere")
 async def promozione_operatore(interaction: Interaction, utente: discord.Member):
     autorizzati = [819251679081791498, 896679736418381855, 815496510653333524]
-    if not any(role.id in autorizzati for role in interaction.user.roles):
-        await interaction.response.send_message("❌ Non hai i permessi per usare questo comando.", ephemeral=True)
+    if not any(r.id in autorizzati for r in interaction.user.roles):
+        await interaction.response.send_message("❌ Non hai i permessi.", ephemeral=True)
         return
     await interaction.response.send_modal(PromozioneForm(utente))
 
-# ✅ TRASFERIMENTO OPERATORE
+# ✅ Trasferimento
 class TrasferimentoForm(ui.Modal, title="🔁 Trasferimento Operatore"):
-    qualifica_operatore = ui.TextInput(label="Qualifica Operatore", style=TextStyle.short)
-    reparto_attuale = ui.TextInput(label="Reparto attuale (NTP o SPS)", style=TextStyle.short)
-    reparto_nuovo = ui.TextInput(label="Reparto di trasferimento (NTP o SPS)", style=TextStyle.short)
-    motivazione = ui.TextInput(label="Motivazione trasferimento (opzionale)", style=TextStyle.paragraph, required=False)
+    qualifica = ui.TextInput(label="Qualifica Operatore", style=TextStyle.short)
+    reparto_att = ui.TextInput(label="Reparto attuale (NTP o SPS)", style=TextStyle.short)
+    reparto_new = ui.TextInput(label="Reparto di trasferimento (NTP o SPS)", style=TextStyle.short)
+    motivazione = ui.TextInput(label="Motivazione (opzionale)", style=TextStyle.paragraph, required=False)
 
-    def __init__(self, utente: discord.Member):
+    def __init__(self, utente):
         super().__init__()
         self.utente = utente
 
     async def on_submit(self, interaction: Interaction):
-        canale = interaction.client.get_channel(899561903448260628)
-        guild = interaction.guild
+        r_att = REPARTI.get(self.reparto_att.value.lower().strip())
+        r_new = REPARTI.get(self.reparto_new.value.lower().strip())
 
-        def rep_nome(abbr):
-            mapping = {
-                "ntp": ("Nucleo Traduzioni e Piantonamenti", 922893733148635196),
-                "sps": ("Servizio di Polizia Stradale", 819254117758664714)
-            }
-            return mapping.get(abbr.lower().strip())
+        if not r_att or not r_new:
+            await interaction.response.send_message("❌ Reparti validi: NTP o SPS.", ephemeral=True)
+            return
 
-        nome_attuale, ruolo_att = rep_nome(self.reparto_attuale.value)
-        nome_nuovo, ruolo_nuovo = rep_nome(self.reparto_nuovo.value)
+        nome_att, id_att = r_att
+        nome_new, id_new = r_new
 
-        emoji = trova_emoji(self.qualifica_operatore.value, guild.emojis)
+        motivazione = self.motivazione.value.strip() or "necessità di personale nel nuovo reparto."
+        emoji = "📦"
 
-        motivo = self.motivazione.value.strip() or \
-            "a seguito dell'approvazione della richiesta di trasferimento vista necessità di personale all'interno del reparto."
+        # Ruoli
+        ruolo_rimuovi = interaction.guild.get_role(id_att)
+        ruolo_aggiungi = interaction.guild.get_role(id_new)
 
-        ruolo_rimuovere = guild.get_role(ruolo_att)
-        ruolo_aggiungere = guild.get_role(ruolo_nuovo)
+        if ruolo_rimuovi: await self.utente.remove_roles(ruolo_rimuovi)
+        if ruolo_aggiungi: await self.utente.add_roles(ruolo_aggiungi)
 
-        if ruolo_rimuovere:
-            await self.utente.remove_roles(ruolo_rimuovere)
-        if ruolo_aggiungere:
-            await self.utente.add_roles(ruolo_aggiungere)
-
-        messaggio = (
-            f"> **{self.qualifica_operatore.value}** {emoji} {self.utente.mention} "
-            f"viene *trasferito* presso il **{nome_nuovo.upper()}** {motivo}\n\n"
-            f"*Approvato da: {interaction.user.mention}*"
+        # Embed log
+        embed = discord.Embed(
+            title="📦 Trasferimento Eseguito",
+            description=(
+                f"**{self.qualifica.value}** {emoji} {self.utente.mention} è stato *trasferito* da "
+                f"**{nome_att.upper()}** a **{nome_new.upper()}**.\n\nMotivo: {motivazione}"
+            ),
+            color=discord.Color.blue()
         )
+        embed.set_footer(text=f"Trasferito da: {interaction.user.display_name}", icon_url=interaction.user.display_avatar.url)
 
-        await canale.send(messaggio)
+        log_channel = interaction.client.get_channel(791774585007767593)
+        await log_channel.send(embed=embed)
+
         try:
-            await self.utente.send(
-                f"📦 Sei stato trasferito presso **{nome_nuovo}**!\n{motivo}"
-            )
+            await self.utente.send(embed=embed)
         except:
             pass
 
         await interaction.response.send_message("✅ Trasferimento registrato!", ephemeral=True)
 
-@bot.tree.command(name="trasferimento-operatore", description="Trasferisci un operatore tra reparti.")
+@bot.tree.command(name="trasferimento-operatore", description="Trasferisci un operatore.")
 @app_commands.describe(utente="Utente da trasferire")
-async def trasferimento_operatore(interaction: Interaction, utente: discord.Member):
+async def trasferimento(interaction: Interaction, utente: discord.Member):
     autorizzati = [819251679081791498, 896679736418381855, 815496510653333524]
-    if not any(role.id in autorizzati for role in interaction.user.roles):
-        await interaction.response.send_message("❌ Non hai i permessi per usare questo comando.", ephemeral=True)
+    if not any(r.id in autorizzati for r in interaction.user.roles):
+        await interaction.response.send_message("❌ Non hai i permessi.", ephemeral=True)
         return
     await interaction.response.send_modal(TrasferimentoForm(utente))
 
-# 🟨 DEBUG TEMPORANEO
-print("DEBUG: Avvio bot con token:", os.getenv("DISCORD_TOKEN"))  # ⚠️ Rimuovi in produzione
-
-# 🔁 AVVIO BOT
-bot.run(os.getenv("DISCORD_TOKEN"))
+# 🚀 Avvio
+if __name__ == "__main__":
+    print("Avvio bot...")
+    bot.run(os.getenv("DISCORD_TOKEN"))
