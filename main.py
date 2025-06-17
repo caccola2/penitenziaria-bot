@@ -6,7 +6,7 @@ from flask import Flask
 from threading import Thread
 import unicodedata
 
-# 🌐 Web server per mantenere attivo il bot su Render
+# 🌐 Web server per Render
 app = Flask('')
 
 @app.route('/')
@@ -18,7 +18,7 @@ def run():
 
 Thread(target=run).start()
 
-# ⚙️ Impostazioni bot
+# ⚙️ Bot setup
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
@@ -36,7 +36,7 @@ async def on_ready():
         print(f"Errore durante la sincronizzazione dei comandi slash: {e}")
     print(f"Bot connesso come {bot.user}")
 
-# ✅ Comando /attivita-istituzionale
+# ✅ Attività programmata
 @bot.tree.command(name="attivita-istituzionale", description="Invia un'attività programmata.")
 @app_commands.describe(
     attivita="Nome dell'attività o evento",
@@ -74,12 +74,12 @@ async def attivita(interaction: discord.Interaction, attivita: str, luogo: str, 
     await channel.send("||<@&791772896736313371>||")
     await interaction.response.send_message("Attività programmata inviata con successo!", ephemeral=True)
 
-# ✅ Comando /check
+# ✅ Check comando
 @bot.tree.command(name="check", description="Verifica se il bot è online.")
 async def check(interaction: discord.Interaction):
     await interaction.response.send_message("Il bot funziona porcodio 🐷⚡", ephemeral=True)
 
-# 🔍 Emoji matching
+# 🔍 Emoji intelligente
 def trova_emoji(nome_qualifica, emoji_lista):
     def normalizza(testo):
         testo = testo.lower().replace(" ", "").replace("-", "")
@@ -87,15 +87,30 @@ def trova_emoji(nome_qualifica, emoji_lista):
         return testo
 
     nome_norm = normalizza(nome_qualifica)
+
     for emoji in emoji_lista:
         if nome_norm == normalizza(emoji.name):
             return str(emoji)
+
     for emoji in emoji_lista:
-        if nome_norm in normalizza(emoji.name):
+        nome_emoji = normalizza(emoji.name)
+        if nome_norm in nome_emoji and not nome_emoji.startswith("allievo"):
             return str(emoji)
+
     return ""
 
-# ✅ Comando /promozione-operatore
+# 🔍 Ruolo intelligente
+def trova_ruolo(nome, ruoli):
+    nome_norm = nome.lower().replace(" ", "")
+    for r in ruoli:
+        if nome_norm == r.name.lower().replace(" ", ""):
+            return r
+    for r in ruoli:
+        if nome_norm in r.name.lower().replace(" ", "") and not r.name.lower().startswith("allievo"):
+            return r
+    return None
+
+# ✅ Promozione operatore
 class PromozioneForm(ui.Modal, title="📈 Form Promozione Operatore"):
 
     qualifica_operatore = ui.TextInput(label="Qualifica Operatore", style=TextStyle.short)
@@ -125,14 +140,6 @@ class PromozioneForm(ui.Modal, title="📈 Form Promozione Operatore"):
             f"*Promosso da: {interaction.user.mention}*"
         )
 
-        # Trova ruoli
-        def trova_ruolo(nome, ruoli):
-            nome_norm = nome.lower().replace(" ", "")
-            for r in ruoli:
-                if nome_norm in r.name.lower().replace(" ", ""):
-                    return r
-            return None
-
         ruolo_attuale = trova_ruolo(self.qualifica_operatore.value, interaction.guild.roles)
         ruolo_nuovo = trova_ruolo(self.nuova_qualifica.value, interaction.guild.roles)
 
@@ -142,16 +149,27 @@ class PromozioneForm(ui.Modal, title="📈 Form Promozione Operatore"):
             if ruolo_nuovo:
                 await self.utente.add_roles(ruolo_nuovo)
         except discord.Forbidden:
-            await interaction.response.send_message("❌ Non ho i permessi per gestire i ruoli su questo utente.", ephemeral=True)
+            await interaction.response.send_message("❌ Non ho i permessi per modificare i ruoli.", ephemeral=True)
             return
 
-        # ✅ DM all’utente promosso
+        # 📩 Embed in DM
         try:
-            await self.utente.send(
-                f"Ciao {self.utente.display_name}, sei stato promosso!\n\n{messaggio}"
+            embed_dm = discord.Embed(
+                title="📈 Nuova Promozione!",
+                description=(
+                    f"> **{self.qualifica_operatore.value}** {emoji_qualifica} "
+                    f"sei stato promosso alla qualifica di "
+                    f"**{self.nuova_qualifica.value}** {emoji_promozione} {motivazione}"
+                ),
+                color=discord.Color.blue()
             )
+            embed_dm.set_footer(
+                text=f"Promosso da: {interaction.user.display_name}",
+                icon_url=interaction.user.display_avatar.url
+            )
+            await self.utente.send(embed=embed_dm)
         except discord.Forbidden:
-            pass  # DM disattivati dall'utente
+            pass
 
         await canale.send(messaggio)
         await interaction.response.send_message("✅ Promozione inviata e ruoli aggiornati!", ephemeral=True)
@@ -168,5 +186,5 @@ async def promozione_operatore(interaction: Interaction, utente: discord.Member)
 
     await interaction.response.send_modal(PromozioneForm(utente=utente))
 
-# 🔁 Avvio bot
+# 🚀 Avvio
 bot.run(os.getenv("DISCORD_TOKEN"))
