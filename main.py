@@ -52,12 +52,10 @@ def trova_emoji(nome_qualifica, emoji_lista):
             return str(emoji)
     return "📦"
 
-# ✅ /check
 @bot.tree.command(name="check", description="Verifica se il bot è online.")
 async def check(interaction: Interaction):
     await interaction.response.send_message("✅ Il bot è online e funzionante.", ephemeral=True)
 
-# ✅ /attivita-istituzionale
 @bot.tree.command(name="attivita-istituzionale", description="Invia un'attività programmata.")
 @app_commands.describe(attivita="Nome attività", luogo="Luogo incontro", data_orario="Data e orario")
 async def attivita(interaction: Interaction, attivita: str, luogo: str, data_orario: str):
@@ -87,7 +85,6 @@ async def attivita(interaction: Interaction, attivita: str, luogo: str, data_ora
     await canale.send("||<@&791772896736313371>||")
     await interaction.response.send_message("✅ Attività programmata inviata con successo!", ephemeral=True)
 
-# ✅ /promozione-operatore
 class PromozioneForm(ui.Modal, title="📈 Promozione Operatore"):
     qualifica_attuale = ui.TextInput(label="Qualifica Attuale", style=TextStyle.short)
     qualifica_nuova = ui.TextInput(label="Qualifica da Attestare", style=TextStyle.short)
@@ -130,7 +127,6 @@ async def promozione_operatore(interaction: Interaction, utente: discord.Member)
         return
     await interaction.response.send_modal(PromozioneForm(utente))
 
-# ✅ /trasferimento-operatore
 class TrasferimentoForm(ui.Modal, title="📦 Trasferimento Operatore"):
     qualifica = ui.TextInput(label="Qualifica Operatore", style=TextStyle.short)
     reparto_attuale = ui.TextInput(label="Reparto Attuale (NTP/SPS)", style=TextStyle.short)
@@ -197,11 +193,11 @@ async def trasferimento_operatore(interaction: Interaction, utente: discord.Memb
         return
     await interaction.response.send_modal(TrasferimentoForm(utente))
 
-# 🔁 Avvio bot
-if __name__ == \"__main__\":
-    token = os.getenv(\"DISCORD_TOKEN\")
+# ✅ Avvio bot (CORRETTO)
+if __name__ == "__main__":
+    token = os.getenv("DISCORD_TOKEN")
     if not token:
-        print(\"❌ TOKEN mancante\")
+        print("❌ TOKEN mancante")
     else:
-        print(\"✅ Avvio bot in corso...\")
+        print("✅ Avvio bot in corso...")
         bot.run(token)
