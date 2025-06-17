@@ -103,4 +103,4 @@ class PromozioneForm(ui.Modal, title="📈 Form Promozione Operatore"):
     nuova_qualifica = ui.TextInput(label="Qualifica da attestare", style=TextStyle.short)
     motivazione = ui.TextInput(label="Motivazione promozione (opzionale)", style=TextStyle.paragraph, required=False)
 
-    def __init__(self, utente: discord.Me
+    def __init__(self, utente: discord.Member):
