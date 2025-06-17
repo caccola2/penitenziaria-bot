@@ -22,7 +22,7 @@ Thread(target=run).start()
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
-intents.members = True  # necessario per leggere i ruoli
+intents.members = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
@@ -43,12 +43,7 @@ async def on_ready():
     luogo="Luogo di incontro",
     data_orario="Data e orario dell'incontro"
 )
-async def attivita(
-    interaction: discord.Interaction,
-    attivita: str,
-    luogo: str,
-    data_orario: str
-):
+async def attivita(interaction: discord.Interaction, attivita: str, luogo: str, data_orario: str):
     user_roles = [role.id for role in interaction.user.roles]
     if not any(role_id in user_roles for role_id in [819251679081791498, 815496510653333524]):
         await interaction.response.send_message("Non hai i permessi per usare questo comando.", ephemeral=True)
@@ -79,12 +74,12 @@ async def attivita(
     await channel.send("||<@&791772896736313371>||")
     await interaction.response.send_message("Attività programmata inviata con successo!", ephemeral=True)
 
-# ✅ Comando /check per test
+# ✅ Comando /check
 @bot.tree.command(name="check", description="Verifica se il bot è online.")
 async def check(interaction: discord.Interaction):
     await interaction.response.send_message("Il bot funziona porcodio 🐷⚡", ephemeral=True)
 
-# 🔍 Funzione ottimizzata per trovare l'emoji
+# 🔍 Emoji matching
 def trova_emoji(nome_qualifica, emoji_lista):
     def normalizza(testo):
         testo = testo.lower().replace(" ", "").replace("-", "")
@@ -92,18 +87,13 @@ def trova_emoji(nome_qualifica, emoji_lista):
         return testo
 
     nome_norm = normalizza(nome_qualifica)
-
-    # Match perfetto
     for emoji in emoji_lista:
         if nome_norm == normalizza(emoji.name):
             return str(emoji)
-
-    # Match parziale
     for emoji in emoji_lista:
         if nome_norm in normalizza(emoji.name):
             return str(emoji)
-
-    return ""  # Nessun match trovato
+    return ""
 
 # ✅ Comando /promozione-operatore
 class PromozioneForm(ui.Modal, title="📈 Form Promozione Operatore"):
@@ -135,8 +125,36 @@ class PromozioneForm(ui.Modal, title="📈 Form Promozione Operatore"):
             f"*Promosso da: {interaction.user.mention}*"
         )
 
+        # Trova ruoli
+        def trova_ruolo(nome, ruoli):
+            nome_norm = nome.lower().replace(" ", "")
+            for r in ruoli:
+                if nome_norm in r.name.lower().replace(" ", ""):
+                    return r
+            return None
+
+        ruolo_attuale = trova_ruolo(self.qualifica_operatore.value, interaction.guild.roles)
+        ruolo_nuovo = trova_ruolo(self.nuova_qualifica.value, interaction.guild.roles)
+
+        try:
+            if ruolo_attuale and ruolo_attuale in self.utente.roles:
+                await self.utente.remove_roles(ruolo_attuale)
+            if ruolo_nuovo:
+                await self.utente.add_roles(ruolo_nuovo)
+        except discord.Forbidden:
+            await interaction.response.send_message("❌ Non ho i permessi per gestire i ruoli su questo utente.", ephemeral=True)
+            return
+
+        # ✅ DM all’utente promosso
+        try:
+            await self.utente.send(
+                f"Ciao {self.utente.display_name}, sei stato promosso!\n\n{messaggio}"
+            )
+        except discord.Forbidden:
+            pass  # DM disattivati dall'utente
+
         await canale.send(messaggio)
-        await interaction.response.send_message("✅ Promozione inviata con successo!", ephemeral=True)
+        await interaction.response.send_message("✅ Promozione inviata e ruoli aggiornati!", ephemeral=True)
 
 @bot.tree.command(name="promozione-operatore", description="Promuovi un operatore compilando il form.")
 @app_commands.describe(utente="Utente da promuovere")
@@ -150,5 +168,5 @@ async def promozione_operatore(interaction: Interaction, utente: discord.Member)
 
     await interaction.response.send_modal(PromozioneForm(utente=utente))
 
-# 🔁 Avvio del bot
+# 🔁 Avvio bot
 bot.run(os.getenv("DISCORD_TOKEN"))
