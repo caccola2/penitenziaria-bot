@@ -1,7 +1,7 @@
 import os
 import discord
 from discord.ext import commands
-from discord import app_commands, ui, TextStyle, Interaction
+from discord import app_commands, ui, Interaction
 from flask import Flask
 from threading import Thread
 import unicodedata
@@ -46,6 +46,10 @@ async def attivita(interaction: discord.Interaction, attivita: str, luogo: str, 
         return
 
     channel = bot.get_channel(904658463739772998)
+    if channel is None:
+        await interaction.response.send_message("Canale non trovato.", ephemeral=True)
+        return
+
     embed = discord.Embed(
         title="**<:PP:793201995041079317> | ATTIVITÀ PROGRAMMATA**",
         color=discord.Color.from_str("#1e1f3f")
@@ -55,8 +59,10 @@ async def attivita(interaction: discord.Interaction, attivita: str, luogo: str, 
     embed.add_field(name="🕒 Data e orario", value=f"> {data_orario}", inline=False)
     embed.add_field(
         name="✅ Presenza",
-        value="*Reagite alla reazione per segnare la presenza.*\n"
-              "*Info precise verranno fornite appena disponibili.*",
+        value=(
+            "*Reagite alla reazione per segnare la presenza.*\n"
+            "*Info precise verranno fornite appena disponibili.*"
+        ),
         inline=False
     )
     embed.set_footer(text=f"Attività aperta da: {interaction.user.display_name}", icon_url=interaction.user.display_avatar.url)
@@ -99,9 +105,9 @@ def trova_ruolo(nome, ruoli):
 
 # ✅ Promozione operatore
 class PromozioneForm(ui.Modal, title="📈 Form Promozione Operatore"):
-    qualifica_operatore = ui.TextInput(label="Qualifica Operatore", style=TextStyle.short)
-    nuova_qualifica = ui.TextInput(label="Qualifica da attestare", style=TextStyle.short)
-    motivazione = ui.TextInput(label="Motivazione promozione (opzionale)", style=TextStyle.paragraph, required=False)
+    qualifica_operatore = ui.TextInput(label="Qualifica Operatore", style=discord.TextStyle.short)
+    nuova_qualifica = ui.TextInput(label="Qualifica da attestare", style=discord.TextStyle.short)
+    motivazione = ui.TextInput(label="Motivazione promozione (opzionale)", style=discord.TextStyle.paragraph, required=False)
 
     def __init__(self, utente: discord.Member):
         super().__init__()
@@ -109,7 +115,7 @@ class PromozioneForm(ui.Modal, title="📈 Form Promozione Operatore"):
 
     async def on_submit(self, interaction: Interaction):
         canale = interaction.client.get_channel(899561903448260628)
-        motivazione = self.motivazione.value.strip() if self.motivazione.value.strip() else "a seguito del superamento dei requisiti necessari per tale qualifica."
+        motivazione = self.motivazione.value.strip() or "a seguito del superamento dei requisiti necessari per tale qualifica."
         emoji_qualifica = trova_emoji(self.qualifica_operatore.value, interaction.guild.emojis)
         emoji_promozione = trova_emoji(self.nuova_qualifica.value, interaction.guild.emojis)
         messaggio = f"> **{self.qualifica_operatore.value}** {emoji_qualifica} {self.utente.mention} viene promosso alla qualifica di **{self.nuova_qualifica.value}** {emoji_promozione} {motivazione}\n\n*Promosso da: {interaction.user.mention}*"
@@ -149,10 +155,10 @@ async def promozione_operatore(interaction: Interaction, utente: discord.Member)
 # ✅ Trasferimento operatore aggiornato con reparti NTP/SPS
 class TrasferimentoForm(ui.Modal, title="🔄 Form Trasferimento Operatore"):
 
-    qualifica_operatore = ui.TextInput(label="Qualifica Operatore", style=TextStyle.short)
-    reparto_attuale = ui.TextInput(label="Reparto attuale (NTP o SPS)", style=TextStyle.short)
-    reparto_trasferimento = ui.TextInput(label="Reparto di trasferimento (NTP o SPS)", style=TextStyle.short)
-    motivazione = ui.TextInput(label="Motivazione trasferimento (opzionale)", style=TextStyle.paragraph, required=False)
+    qualifica_operatore = ui.TextInput(label="Qualifica Operatore", style=discord.TextStyle.short)
+    reparto_attuale = ui.TextInput(label="Reparto attuale (NTP o SPS)", style=discord.TextStyle.short)
+    reparto_trasferimento = ui.TextInput(label="Reparto di trasferimento (NTP o SPS)", style=discord.TextStyle.short)
+    motivazione = ui.TextInput(label="Motivazione trasferimento (opzionale)", style=discord.TextStyle.paragraph, required=False)
 
     def __init__(self, utente: discord.Member):
         super().__init__()
@@ -160,8 +166,6 @@ class TrasferimentoForm(ui.Modal, title="🔄 Form Trasferimento Operatore"):
 
     async def on_submit(self, interaction: Interaction):
         canale = interaction.client.get_channel(899561903448260628)
-
-        # ✨ Mappa reparti
         reparti = {
             "ntp": ("Nucleo Traduzioni e Piantonamenti", 922893733148635196),
             "sps": ("Servizio di Polizia Stradale", 819254117758664714)
@@ -181,11 +185,7 @@ class TrasferimentoForm(ui.Modal, title="🔄 Form Trasferimento Operatore"):
         nome_rep_tra, ruolo_tra_id = reparti[rep_tra]
 
         emoji_qualifica = trova_emoji(self.qualifica_operatore.value, interaction.guild.emojis)
-        motivazione = (
-            self.motivazione.value.strip()
-            if self.motivazione.value.strip()
-            else "a seguito dell'approvazione della richiesta di trasferimento vista necessità di personale all'interno del reparto."
-        )
+        motivazione = self.motivazione.value.strip() or "a seguito dell'approvazione della richiesta di trasferimento vista necessità di personale all'interno del reparto."
 
         messaggio = (
             f"> **{self.qualifica_operatore.value}** {emoji_qualifica} "
