@@ -1,7 +1,7 @@
 import os
 import discord
 from discord.ext import commands
-from discord import app_commands, ui, Interaction
+from discord import app_commands, ui, Interaction, TextStyle
 from flask import Flask
 from threading import Thread
 import unicodedata
@@ -31,22 +31,53 @@ async def on_ready():
     await bot.wait_until_ready()
     try:
         synced = await bot.tree.sync()
-        print(f"Comandi slash sincronizzati: {len(synced)}")
+        print(f"[DEBUG] Comandi slash sincronizzati: {len(synced)}")
     except Exception as e:
-        print(f"Errore sincronizzazione: {e}")
-    print(f"Bot connesso come {bot.user}")
+        print(f"[DEBUG] Errore sincronizzazione: {e}")
+    print(f"[DEBUG] Bot connesso come {bot.user}")
 
-# ✅ Attività
+# 🔍 Funzioni "intelligenti"
+def normalizza(testo):
+    testo = testo.lower().replace(" ", "").replace("-", "")
+    return ''.join(c for c in unicodedata.normalize('NFD', testo)
+                   if unicodedata.category(c) != 'Mn')
+
+def trova_emoji(nome_qualifica, emoji_lista):
+    nome_norm = normalizza(nome_qualifica)
+    for emoji in emoji_lista:
+        if nome_norm == normalizza(emoji.name):
+            return str(emoji)
+    for emoji in emoji_lista:
+        nome_emoji = normalizza(emoji.name)
+        if nome_norm in nome_emoji and not nome_emoji.startswith("allievo"):
+            return str(emoji)
+    return ""
+
+def trova_ruolo(nome, ruoli):
+    nome_norm = normalizza(nome)
+    for r in ruoli:
+        if nome_norm == normalizza(r.name):
+            return r
+    for r in ruoli:
+        n = normalizza(r.name)
+        if nome_norm in n and not n.startswith("allievo"):
+            return r
+    return None
+
+# ✅ Comando: attività istituzionale
 @bot.tree.command(name="attivita-istituzionale", description="Invia un'attività programmata.")
 @app_commands.describe(attivita="Nome dell'attività", luogo="Luogo di incontro", data_orario="Data e ora")
 async def attivita(interaction: discord.Interaction, attivita: str, luogo: str, data_orario: str):
-    user_roles = [role.id for role in interaction.user.roles]
+    print(f"[DEBUG] /attivita chiamato da {interaction.user} con params: {attivita}, {luogo}, {data_orario}")
+    user_roles = [r.id for r in interaction.user.roles]
     if not any(r in user_roles for r in [819251679081791498, 815496510653333524]):
+        print("[DEBUG] Utente non autorizzato.")
         await interaction.response.send_message("Non hai i permessi.", ephemeral=True)
         return
 
     channel = bot.get_channel(904658463739772998)
     if channel is None:
+        print("[DEBUG] Canale attività non trovato.")
         await interaction.response.send_message("Canale non trovato.", ephemeral=True)
         return
 
@@ -71,171 +102,142 @@ async def attivita(interaction: discord.Interaction, attivita: str, luogo: str, 
     await channel.send("||<@&791772896736313371>||")
     await interaction.response.send_message("Attività inviata!", ephemeral=True)
 
-# ✅ Check
+# ✅ Comando: check
 @bot.tree.command(name="check", description="Verifica se il bot è online.")
 async def check(interaction: discord.Interaction):
+    print(f"[DEBUG] /check chiamato da {interaction.user}")
     await interaction.response.send_message("Il bot funziona porcodio 🐷⚡", ephemeral=True)
 
-# 🔍 Emoji intelligente
-def trova_emoji(nome_qualifica, emoji_lista):
-    def normalizza(testo):
-        testo = testo.lower().replace(" ", "").replace("-", "")
-        testo = ''.join(c for c in unicodedata.normalize('NFD', testo) if unicodedata.category(c) != 'Mn')
-        return testo
-    nome_norm = normalizza(nome_qualifica)
-    for emoji in emoji_lista:
-        if nome_norm == normalizza(emoji.name):
-            return str(emoji)
-    for emoji in emoji_lista:
-        nome_emoji = normalizza(emoji.name)
-        if nome_norm in nome_emoji and not nome_emoji.startswith("allievo"):
-            return str(emoji)
-    return ""
-
-# 🔍 Ruolo intelligente
-def trova_ruolo(nome, ruoli):
-    nome_norm = nome.lower().replace(" ", "")
-    for r in ruoli:
-        if nome_norm == r.name.lower().replace(" ", ""):
-            return r
-    for r in ruoli:
-        if nome_norm in r.name.lower().replace(" ", "") and not r.name.lower().startswith("allievo"):
-            return r
-    return None
-
-# ✅ Promozione operatore
+# ✅ Modal: promozione
 class PromozioneForm(ui.Modal, title="📈 Form Promozione Operatore"):
-    qualifica_operatore = ui.TextInput(label="Qualifica Operatore", style=discord.TextStyle.short)
-    nuova_qualifica = ui.TextInput(label="Qualifica da attestare", style=discord.TextStyle.short)
-    motivazione = ui.TextInput(label="Motivazione promozione (opzionale)", style=discord.TextStyle.paragraph, required=False)
+    qualifica_operatore = ui.TextInput(label="Qualifica Operatore", style=TextStyle.short)
+    nuova_qualifica = ui.TextInput(label="Qualifica da attestare", style=TextStyle.short)
+    motivazione = ui.TextInput(label="Motivazione promozione (opzionale)", style=TextStyle.paragraph, required=False)
 
     def __init__(self, utente: discord.Member):
         super().__init__()
         self.utente = utente
 
     async def on_submit(self, interaction: Interaction):
+        print(f"[DEBUG] PromozioneForm on_submit per {self.utente} da {interaction.user}")
         canale = interaction.client.get_channel(899561903448260628)
+        print(f"[DEBUG] Canale promozione: {canale}")
         motivazione = self.motivazione.value.strip() or "a seguito del superamento dei requisiti necessari per tale qualifica."
         emoji_qualifica = trova_emoji(self.qualifica_operatore.value, interaction.guild.emojis)
         emoji_promozione = trova_emoji(self.nuova_qualifica.value, interaction.guild.emojis)
-        messaggio = f"> **{self.qualifica_operatore.value}** {emoji_qualifica} {self.utente.mention} viene promosso alla qualifica di **{self.nuova_qualifica.value}** {emoji_promozione} {motivazione}\n\n*Promosso da: {interaction.user.mention}*"
+        mess = (f"> **{self.qualifica_operatore.value}** {emoji_qualifica} "
+                f"{self.utente.mention} viene promosso alla qualifica di **{self.nuova_qualifica.value}** "
+                f"{emoji_promozione} {motivazione}\n\n*Promosso da: {interaction.user.mention}*")
         ruolo_attuale = trova_ruolo(self.qualifica_operatore.value, interaction.guild.roles)
         ruolo_nuovo = trova_ruolo(self.nuova_qualifica.value, interaction.guild.roles)
         try:
             if ruolo_attuale and ruolo_attuale in self.utente.roles:
                 await self.utente.remove_roles(ruolo_attuale)
+                print(f"[DEBUG] Rimosso ruolo {ruolo_attuale} da {self.utente}")
             if ruolo_nuovo:
                 await self.utente.add_roles(ruolo_nuovo)
+                print(f"[DEBUG] Aggiunto ruolo {ruolo_nuovo} a {self.utente}")
         except discord.Forbidden:
+            print("[DEBUG] Permessi insufficienti per ruoli.")
             await interaction.response.send_message("❌ Permessi insufficienti per i ruoli.", ephemeral=True)
             return
         try:
             embed_dm = discord.Embed(
                 title="📈 Nuova Promozione!",
-                description=f"> **{self.qualifica_operatore.value}** {emoji_qualifica} sei stato promosso a **{self.nuova_qualifica.value}** {emoji_promozione} {motivazione}",
+                description=(f"> **{self.qualifica_operatore.value}** {emoji_qualifica} "
+                             f"sei stato promosso a **{self.nuova_qualifica.value}** {emoji_promozione} {motivazione}"),
                 color=discord.Color.blue()
             )
             embed_dm.set_footer(text=f"Promosso da: {interaction.user.display_name}", icon_url=interaction.user.display_avatar.url)
             await self.utente.send(embed=embed_dm)
         except discord.Forbidden:
-            pass
-        await canale.send(messaggio)
+            print("[DEBUG] DM non inviabile.")
+        await canale.send(mess)
         await interaction.response.send_message("✅ Promozione inviata e ruoli aggiornati!", ephemeral=True)
 
 @bot.tree.command(name="promozione-operatore", description="Promuovi un operatore compilando il form.")
 @app_commands.describe(utente="Utente da promuovere")
 async def promozione_operatore(interaction: Interaction, utente: discord.Member):
-    ruoli_autorizzati = [819251679081791498, 896679736418381855, 815496510653333524]
-    user_roles = [role.id for role in interaction.user.roles]
-    if not any(role_id in user_roles for role_id in ruoli_autorizzati):
+    print(f"[DEBUG] /promozione-operatore chiamato da {interaction.user} su {utente}")
+    ruoli_aut = [819251679081791498, 896679736418381855, 815496510653333524]
+    user_roles = [r.id for r in interaction.user.roles]
+    if not any(r in user_roles for r in ruoli_aut):
+        print("[DEBUG] Utente promotore non autorizzato.")
         await interaction.response.send_message("❌ Permessi insufficienti.", ephemeral=True)
         return
     await interaction.response.send_modal(PromozioneForm(utente=utente))
 
-# ✅ Trasferimento operatore aggiornato con reparti NTP/SPS
+# ✅ Modal: trasferimento
 class TrasferimentoForm(ui.Modal, title="🔄 Form Trasferimento Operatore"):
-
-    qualifica_operatore = ui.TextInput(label="Qualifica Operatore", style=discord.TextStyle.short)
-    reparto_attuale = ui.TextInput(label="Reparto attuale (NTP o SPS)", style=discord.TextStyle.short)
-    reparto_trasferimento = ui.TextInput(label="Reparto di trasferimento (NTP o SPS)", style=discord.TextStyle.short)
-    motivazione = ui.TextInput(label="Motivazione trasferimento (opzionale)", style=discord.TextStyle.paragraph, required=False)
+    qualifica_operatore = ui.TextInput(label="Qualifica Operatore", style=TextStyle.short)
+    reparto_attuale = ui.TextInput(label="Reparto attuale (NTP o SPS)", style=TextStyle.short)
+    reparto_trasferimento = ui.TextInput(label="Reparto di trasferimento (NTP o SPS)", style=TextStyle.short)
+    motivazione = ui.TextInput(label="Motivazione trasferimento (opzionale)", style=TextStyle.paragraph, required=False)
 
     def __init__(self, utente: discord.Member):
         super().__init__()
         self.utente = utente
 
     async def on_submit(self, interaction: Interaction):
+        print(f"[DEBUG] TrasferimentoForm on_submit per {self.utente} da {interaction.user}")
         canale = interaction.client.get_channel(791774585007767593)
         reparti = {
             "ntp": ("Nucleo Traduzioni e Piantonamenti", 922893733148635196),
             "sps": ("Servizio di Polizia Stradale", 819254117758664714)
         }
-
-        def normalizza(valore):
-            return valore.lower().strip().replace(" ", "")
-
-        rep_att = normalizza(self.reparto_attuale.value)
-        rep_tra = normalizza(self.reparto_trasferimento.value)
-
-        if rep_att not in reparti or rep_tra not in reparti:
+        def norm(v): return normalizza(v)
+        att = norm(self.reparto_attuale.value)
+        tra = norm(self.reparto_trasferimento.value)
+        if att not in reparti or tra not in reparti:
+            print("[DEBUG] Reparti non validi.")
             await interaction.response.send_message("❌ I reparti devono essere 'NTP' o 'SPS'.", ephemeral=True)
             return
-
-        nome_rep_att, ruolo_att_id = reparti[rep_att]
-        nome_rep_tra, ruolo_tra_id = reparti[rep_tra]
-
-        emoji_qualifica = trova_emoji(self.qualifica_operatore.value, interaction.guild.emojis)
-        motivazione = self.motivazione.value.strip() or "a seguito dell'approvazione della richiesta di trasferimento vista necessità di personale all'interno del reparto."
-
-        messaggio = (
-            f"> **{self.qualifica_operatore.value}** {emoji_qualifica} "
-            f"{self.utente.mention} viene *trasferito* da **{nome_rep_att}** a **{nome_rep_tra}** {motivazione}\n\n"
-            f"*Autorizzato da: {interaction.user.mention}*"
-        )
-
-        ruolo_attuale = interaction.guild.get_role(ruolo_att_id)
-        ruolo_nuovo = interaction.guild.get_role(ruolo_tra_id)
-
+        n_att, id_att = reparti[att]
+        n_tra, id_tra = reparti[tra]
+        emoji_qual = trova_emoji(self.qualifica_operatore.value, interaction.guild.emojis)
+        motiv = self.motivazione.value.strip() or "a seguito dell'approvazione..."
+        mess = (f"> **{self.qualifica_operatore.value}** {emoji_qual} "
+                f"{self.utente.mention} viene *trasferito* da **{n_att}** a **{n_tra}** {motiv}\n\n"
+                f"*Autorizzato da: {interaction.user.mention}*")
+        ruolo_att = interaction.guild.get_role(id_att)
+        ruolo_tra = interaction.guild.get_role(id_tra)
         try:
-            if ruolo_attuale and ruolo_attuale in self.utente.roles:
-                await self.utente.remove_roles(ruolo_attuale)
-            if ruolo_nuovo:
-                await self.utente.add_roles(ruolo_nuovo)
+            if ruolo_att and ruolo_att in self.utente.roles:
+                await self.utente.remove_roles(ruolo_att)
+                print(f"[DEBUG] Rimosso ruolo reparto {ruolo_att}")
+            if ruolo_tra:
+                await self.utente.add_roles(ruolo_tra)
+                print(f"[DEBUG] Aggiunto ruolo reparto {ruolo_tra}")
         except discord.Forbidden:
+            print("[DEBUG] Permessi insufficienti reparto.")
             await interaction.response.send_message("❌ Non ho i permessi per modificare i ruoli reparto.", ephemeral=True)
             return
-
         try:
             embed_dm = discord.Embed(
                 title="🔄 Trasferimento Eseguito",
-                description=(
-                    f"> **{self.qualifica_operatore.value}** {emoji_qualifica} sei stato *trasferito* da "
-                    f"**{nome_rep_att}** a **{nome_rep_tra}** {motivazione}"
-                ),
+                description=(f"> **{self.qualifica_operatore.value}** {emoji_qual} sei stato *trasferito* da "
+                             f"**{n_att}** a **{n_tra}** {motiv}"),
                 color=discord.Color.dark_teal()
             )
-            embed_dm.set_footer(
-                text=f"Trasferito da: {interaction.user.display_name}",
-                icon_url=interaction.user.display_avatar.url
-            )
+            embed_dm.set_footer(text=f"Trasferito da: {interaction.user.display_name}", icon_url=interaction.user.display_avatar.url)
             await self.utente.send(embed=embed_dm)
         except discord.Forbidden:
-            pass
-
-        await canale.send(messaggio)
+            print("[DEBUG] DM trasferimento non inviabile.")
+        await canale.send(mess)
         await interaction.response.send_message("✅ Trasferimento completato!", ephemeral=True)
 
 @bot.tree.command(name="trasferimento-operatore", description="Trasferisce un operatore in un altro reparto.")
 @app_commands.describe(utente="Utente da trasferire")
 async def trasferimento_operatore(interaction: Interaction, utente: discord.Member):
-    ruoli_autorizzati = [819251679081791498, 896679736418381855, 815496510653333524]
-    user_roles = [role.id for role in interaction.user.roles]
-    if not any(role_id in user_roles for role_id in ruoli_autorizzati):
+    print(f"[DEBUG] /trasferimento-operatore chiamato da {interaction.user} su {utente}")
+    ruoli_aut = [819251679081791498, 896679736418381855, 815496510653333524]
+    if not any(r.id in ruoli_aut for r in interaction.user.roles):
+        print("[DEBUG] Utente trasferimento non autorizzato.")
         await interaction.response.send_message("❌ Permessi insufficienti.", ephemeral=True)
         return
     await interaction.response.send_modal(TrasferimentoForm(utente=utente))
 
-# ✅ Rimprovero operatore
+# ✅ Modal: rimprovero
 class RimproveroForm(ui.Modal, title="⚠️ Form Rimprovero Operatore"):
     qualifica_operatore = ui.TextInput(label="Qualifica Operatore", style=TextStyle.short)
     motivazione = ui.TextInput(label="Motivazione del rimprovero", style=TextStyle.paragraph)
@@ -245,44 +247,42 @@ class RimproveroForm(ui.Modal, title="⚠️ Form Rimprovero Operatore"):
         self.utente = utente
 
     async def on_submit(self, interaction: Interaction):
+        print(f"[DEBUG] RimproveroForm on_submit per {self.utente} da {interaction.user}")
         canale = interaction.client.get_channel(1251591493857312779)
-        emoji_qualifica = trova_emoji(self.qualifica_operatore.value, interaction.guild.emojis)
-        motivazione = self.motivazione.value.strip()
-
-        messaggio = (
-            f"> **{self.qualifica_operatore.value}** {emoji_qualifica} "
-            f"{self.utente.mention} riceve un **RIMPROVERO** {motivazione}\n\n"
-            f"*Rimproverato da: {interaction.user.mention}*"
-        )
-
+        emoji_qual = trova_emoji(self.qualifica_operatore.value, interaction.guild.emojis)
+        motiv = self.motivazione.value.strip()
+        mess = (f"> **{self.qualifica_operatore.value}** {emoji_qual} "
+                f"{self.utente.mention} riceve un **RIMPROVERO** {motiv}\n\n"
+                f"*Rimproverato da: {interaction.user.mention}*")
         try:
             embed_dm = discord.Embed(
                 title="⚠️ Rimprovero Ricevuto",
-                description=(
-                    f"> **{self.qualifica_operatore.value}** {emoji_qualifica}, hai ricevuto un **rimprovero**: {motivazione}"
-                ),
+                description=(f"> **{self.qualifica_operatore.value}** {emoji_qual}, hai ricevuto un **rimprovero**: {motiv}"),
                 color=discord.Color.red()
             )
-            embed_dm.set_footer(
-                text=f"Rimprovero da: {interaction.user.display_name}",
-                icon_url=interaction.user.display_avatar.url
-            )
+            embed_dm.set_footer(text=f"Rimproverato da: {interaction.user.display_name}", icon_url=interaction.user.display_avatar.url)
             await self.utente.send(embed=embed_dm)
         except discord.Forbidden:
-            pass
-
-        await canale.send(messaggio)
+            print("[DEBUG] DM rimprovero non inviabile.")
+        await canale.send(mess)
         await interaction.response.send_message("⚠️ Rimprovero inviato!", ephemeral=True)
 
 @bot.tree.command(name="rimprovero-operatore", description="Rimprovera un operatore compilando il form.")
 @app_commands.describe(utente="Utente da rimproverare")
 async def rimprovero_operatore(interaction: Interaction, utente: discord.Member):
-    ruoli_autorizzati = [819251679081791498, 896679736418381855, 815496510653333524]
-    user_roles = [role.id for role in interaction.user.roles]
-    if not any(role_id in user_roles for role_id in ruoli_autorizzati):
+    print(f"[DEBUG] /rimprovero-operatore chiamato da {interaction.user} su {utente}")
+    ruoli_aut = [819251679081791498, 896679736418381855, 815496510653333524]
+    if not any(r.id in ruoli_aut for r in interaction.user.roles):
+        print("[DEBUG] Utente rimprovero non autorizzato.")
         await interaction.response.send_message("❌ Permessi insufficienti.", ephemeral=True)
         return
     await interaction.response.send_modal(RimproveroForm(utente=utente))
 
 # 🚀 Avvio
-bot.run(os.getenv("DISCORD_TOKEN"))
+if __name__ == "__main__":
+    token = os.getenv("DISCORD_TOKEN")
+    if token:
+        print("[DEBUG] Avvio bot...")
+        bot.run(token)
+    else:
+        print("[DEBUG] Variabile DISCORD_TOKEN non trovata.")
