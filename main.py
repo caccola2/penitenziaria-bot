@@ -235,5 +235,54 @@ async def trasferimento_operatore(interaction: Interaction, utente: discord.Memb
         return
     await interaction.response.send_modal(TrasferimentoForm(utente=utente))
 
+# ✅ Rimprovero operatore
+class RimproveroForm(ui.Modal, title="⚠️ Form Rimprovero Operatore"):
+    qualifica_operatore = ui.TextInput(label="Qualifica Operatore", style=TextStyle.short)
+    motivazione = ui.TextInput(label="Motivazione del rimprovero", style=TextStyle.paragraph)
+
+    def __init__(self, utente: discord.Member):
+        super().__init__()
+        self.utente = utente
+
+    async def on_submit(self, interaction: Interaction):
+        canale = interaction.client.get_channel(1251591493857312779)
+        emoji_qualifica = trova_emoji(self.qualifica_operatore.value, interaction.guild.emojis)
+        motivazione = self.motivazione.value.strip()
+
+        messaggio = (
+            f"> **{self.qualifica_operatore.value}** {emoji_qualifica} "
+            f"{self.utente.mention} riceve un **RIMPROVERO** {motivazione}\n\n"
+            f"*Rimproverato da: {interaction.user.mention}*"
+        )
+
+        try:
+            embed_dm = discord.Embed(
+                title="⚠️ Rimprovero Ricevuto",
+                description=(
+                    f"> **{self.qualifica_operatore.value}** {emoji_qualifica}, hai ricevuto un **rimprovero**: {motivazione}"
+                ),
+                color=discord.Color.red()
+            )
+            embed_dm.set_footer(
+                text=f"Rimprovero da: {interaction.user.display_name}",
+                icon_url=interaction.user.display_avatar.url
+            )
+            await self.utente.send(embed=embed_dm)
+        except discord.Forbidden:
+            pass
+
+        await canale.send(messaggio)
+        await interaction.response.send_message("⚠️ Rimprovero inviato!", ephemeral=True)
+
+@bot.tree.command(name="rimprovero-operatore", description="Rimprovera un operatore compilando il form.")
+@app_commands.describe(utente="Utente da rimproverare")
+async def rimprovero_operatore(interaction: Interaction, utente: discord.Member):
+    ruoli_autorizzati = [819251679081791498, 896679736418381855, 815496510653333524]
+    user_roles = [role.id for role in interaction.user.roles]
+    if not any(role_id in user_roles for role_id in ruoli_autorizzati):
+        await interaction.response.send_message("❌ Permessi insufficienti.", ephemeral=True)
+        return
+    await interaction.response.send_modal(RimproveroForm(utente=utente))
+
 # 🚀 Avvio
 bot.run(os.getenv("DISCORD_TOKEN"))
