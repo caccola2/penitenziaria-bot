@@ -468,14 +468,14 @@ class DirectMailForm(ui.Modal, title="Messaggio Istituzionale"):
         emoji_ingranaggio = "⚙️"
 
         embed = discord.Embed(
-            title=f"{emoji_graffetta} {self.oggetto.value}",
+            title=f"{emoji_graffetta} {self.oggetto.value} {emoji_graffetta}",
             description=(
-                f"**{emoji_graffetta} Corpo di Polizia Penitenziaria {emoji_graffetta}**\n\n"
+                f"**Corpo di Polizia Penitenziaria**\n\n"
                 f"{self.contenuto.value}\n\n"
                 f"———\n"
                 f"*{self.mittente.value}*"
             ),
-            color=discord.Color.dark_blue()
+            color=discord.Color.blue()
         )
         embed.set_footer(
             text=f"{emoji_ingranaggio} Sistema di Comunicazioni Dirette - Polizia Penitenziaria"
@@ -493,11 +493,11 @@ class DirectMailForm(ui.Modal, title="Messaggio Istituzionale"):
                 ephemeral=True
             )
 
-
 @bot.tree.command(name="direct", description="Invia una comunicazione istituzionale via DM.")
 @app_commands.describe(utente="Utente destinatario del messaggio")
 async def direct(interaction: Interaction, utente: discord.Member):
     await interaction.response.send_modal(DirectMailForm(utente))
+    
 
 
 # 🚀 Avvio
