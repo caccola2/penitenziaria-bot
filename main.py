@@ -354,7 +354,7 @@ class InterdizioneForm(ui.Modal, title="⛔ Form Interdizione Operatore"):
 
         messaggio = (
             f"> **{self.qualifica_operatore.value}** {emoji_qualifica} "
-            f"{self.utente.mention} riceve un'interdizione {motivazione}\n\n"
+            f"{self.utente.mention} riceve un'**INTERDIZIONE** {motivazione}\n\n"
             f"*Interdetto da: {interaction.user.mention}*"
         )
 
