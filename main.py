@@ -439,24 +439,24 @@ async def destituzione_operatore(interaction: Interaction, utente: discord.Membe
 
 
 # ✅ Direct
-from discord import app_commands, Interaction, ui, TextStyle
-import discord
-
-class DirectMailForm(ui.Modal, title="Comunicazione Istituzionale"):
+class DirectMailForm(ui.Modal, title="Messaggio Istituzionale"):
     oggetto = ui.TextInput(
         label="Oggetto della Comunicazione",
         placeholder="Es. Notifica Provvedimento Disciplinare",
-        style=TextStyle.short
+        style=TextStyle.short,
+        max_length=45
     )
     mittente = ui.TextInput(
         label="Mittente (Nome o Reparto)",
         placeholder="Es. Ufficio Disciplina - Corpo di Polizia Penitenziaria",
-        style=TextStyle.short
+        style=TextStyle.short,
+        max_length=100
     )
     contenuto = ui.TextInput(
         label="Corpo della Comunicazione",
         placeholder="Scrivi il contenuto della comunicazione in modo formale...",
-        style=TextStyle.paragraph
+        style=TextStyle.paragraph,
+        max_length=1000
     )
 
     def __init__(self, utente: discord.Member):
@@ -464,27 +464,27 @@ class DirectMailForm(ui.Modal, title="Comunicazione Istituzionale"):
         self.utente = utente
 
     async def on_submit(self, interaction: Interaction):
-        emoji_intestazione = "📎"
-        emoji_footer = "📡"
+        emoji_pp = "<:pp:1385030497578651738>"
+        emoji_sistema = "<:sistema:123456789012345678>"  # sostituisci con ID reale
 
         embed = discord.Embed(
-            title=f"{emoji_intestazione} {self.oggetto.value}",
+            title=f"{emoji_pp} {self.oggetto.value}",
             description=(
-                f"**Corpo di Polizia Penitenziaria**\n\n"
+                f"**⦗Corpo di Polizia Penitenziaria⦘**\n\n"
                 f"{self.contenuto.value}\n\n"
-                f"—\n"
+                f"———\n"
                 f"*{self.mittente.value}*"
             ),
             color=discord.Color.dark_blue()
         )
         embed.set_footer(
-            text=f"{emoji_footer} Sistema di Comunicazioni Dirette - Polizia Penitenziaria"
+            text=f"{emoji_sistema} Sistema di Comunicazioni Dirette - Polizia Penitenziaria"
         )
 
         try:
             await self.utente.send(embed=embed)
             await interaction.response.send_message(
-                f"{emoji_intestazione} Comunicazione inviata con successo.",
+                f"{emoji_pp} Comunicazione inviata con successo.",
                 ephemeral=True
             )
         except discord.Forbidden:
@@ -493,10 +493,14 @@ class DirectMailForm(ui.Modal, title="Comunicazione Istituzionale"):
                 ephemeral=True
             )
 
+
 @bot.tree.command(name="direct", description="Invia una comunicazione istituzionale via DM.")
 @app_commands.describe(utente="Utente destinatario del messaggio")
 async def direct(interaction: Interaction, utente: discord.Member):
-    await interaction.response.send_modal(DirectMailForm(utente))
+    # Risposta differita per evitare timeout
+    await interaction.response.defer(ephemeral=True)
+    # Apri il modal subito dopo il defer
+    await interaction.followup.send_modal(DirectMailForm(utente))
 
 
 
