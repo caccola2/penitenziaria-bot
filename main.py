@@ -439,10 +439,22 @@ async def destituzione_operatore(interaction: Interaction, utente: discord.Membe
 
 
 # ✅ Direct
-class DirectMailForm(ui.Modal, title="📨 Invio Messaggio Diretto"):
-    oggetto = ui.TextInput(label="Oggetto del Messaggio", placeholder="Es. Comunicazione ufficiale", style=TextStyle.short)
-    mittente = ui.TextInput(label="Mittente", placeholder="Es. Ufficio Disciplinare", style=TextStyle.short)
-    contenuto = ui.TextInput(label="Contenuto", placeholder="Scrivi qui il contenuto della comunicazione...", style=TextStyle.paragraph)
+class DirectMailForm(ui.Modal, title="📎 Comunicazione Istituzionale - Polizia Penitenziaria"):
+    oggetto = ui.TextInput(
+        label="Oggetto della Comunicazione",
+        placeholder="Es. Notifica Provvedimento Disciplinare",
+        style=TextStyle.short
+    )
+    mittente = ui.TextInput(
+        label="Mittente (Nome o Reparto)",
+        placeholder="Es. Ufficio Disciplina - Corpo di Polizia Penitenziaria",
+        style=TextStyle.short
+    )
+    contenuto = ui.TextInput(
+        label="Corpo della Comunicazione",
+        placeholder="Scrivi il contenuto della comunicazione in modo formale...",
+        style=TextStyle.paragraph
+    )
 
     def __init__(self, utente: discord.Member):
         super().__init__()
@@ -450,20 +462,31 @@ class DirectMailForm(ui.Modal, title="📨 Invio Messaggio Diretto"):
 
     async def on_submit(self, interaction: Interaction):
         embed = discord.Embed(
-            title=f"📩 {self.oggetto.value}",
-            description=self.contenuto.value,
-            color=discord.Color.blurple()
+            title=f"📎 {self.oggetto.value}",
+            description=(
+                f"**Corpo di Polizia Penitenziaria**\n\n"
+                f"{self.contenuto.value}\n\n"
+                f"———\n"
+                f"*{self.mittente.value}*"
+            ),
+            color=discord.Color.dark_blue()
         )
-        embed.set_footer(text=f"Da: {self.mittente.value}")
+        embed.set_footer(
+            text="Sistema Comunicazioni Dirette • Sezione Disciplinare",
+            icon_url="https://i.imgur.com/dJbQfAO.png"  # Cambia con il logo se ne hai uno
+        )
 
         try:
             await self.utente.send(embed=embed)
-            await interaction.response.send_message("✅ Messaggio inviato con successo via DM.", ephemeral=True)
+            await interaction.response.send_message("📎 Comunicazione inviata con successo.", ephemeral=True)
         except discord.Forbidden:
-            await interaction.response.send_message("❌ Impossibile inviare il messaggio: l'utente ha i DM chiusi.", ephemeral=True)
+            await interaction.response.send_message(
+                "❌ Impossibile recapitare la comunicazione: l'utente ha i DM disabilitati.",
+                ephemeral=True
+            )
 
-@bot.tree.command(name="direct", description="Invia un messaggio personale (stile email) a un utente via DM.")
-@app_commands.describe(utente="Utente a cui inviare il messaggio")
+@bot.tree.command(name="direct", description="Invia una comunicazione ufficiale via DM.")
+@app_commands.describe(utente="Utente destinatario della comunicazione")
 async def direct(interaction: Interaction, utente: discord.Member):
     await interaction.response.send_modal(DirectMailForm(utente=utente))
 
