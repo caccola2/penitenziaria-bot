@@ -439,7 +439,7 @@ async def destituzione_operatore(interaction: Interaction, utente: discord.Membe
 
 
 # ✅ Direct
-class DirectMailForm(ui.Modal, title="📎 Messaggio Istituzionale"):
+class DirectMailForm(ui.Modal, title="Messaggio Istituzionale"):
     oggetto = ui.TextInput(
         label="Oggetto della Comunicazione",
         placeholder="Es. Notifica Provvedimento Disciplinare",
@@ -461,8 +461,11 @@ class DirectMailForm(ui.Modal, title="📎 Messaggio Istituzionale"):
         self.utente = utente
 
     async def on_submit(self, interaction: Interaction):
+        emoji_pp = "<:pp:1385030497578651738>"
+        emoji_sistema = "<:sistema:123456789012345678>"  # <-- Sostituisci con l'ID corretto dell'emoji :sistema:
+
         embed = discord.Embed(
-            title=f"📎 {self.oggetto.value}",
+            title=f"{emoji_pp} {self.oggetto.value}",
             description=(
                 f"**Corpo di Polizia Penitenziaria**\n\n"
                 f"{self.contenuto.value}\n\n"
@@ -472,24 +475,20 @@ class DirectMailForm(ui.Modal, title="📎 Messaggio Istituzionale"):
             color=discord.Color.dark_blue()
         )
         embed.set_footer(
-            text="Sistema Comunicazioni Dirette • Sezione Disciplinare",
-            icon_url="https://i.imgur.com/dJbQfAO.png"
+            text=f"{emoji_sistema} Sistema di Comunicazioni Dirette - Polizia Penitenziaria"
         )
 
         try:
             await self.utente.send(embed=embed)
-            await interaction.response.send_message("📎 Comunicazione inviata con successo.", ephemeral=True)
+            await interaction.response.send_message(
+                f"{emoji_pp} Comunicazione inviata con successo.",
+                ephemeral=True
+            )
         except discord.Forbidden:
             await interaction.response.send_message(
                 "❌ Impossibile recapitare la comunicazione: l'utente ha i DM disabilitati.",
                 ephemeral=True
             )
-
-@bot.tree.command(name="direct", description="Invia una comunicazione ufficiale via DM.")
-@app_commands.describe(utente="Utente destinatario della comunicazione")
-async def direct(interaction: Interaction, utente: discord.Member):
-    await interaction.response.send_modal(DirectMailForm(utente=utente))
-
 
 
 # 🚀 Avvio
