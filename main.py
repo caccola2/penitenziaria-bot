@@ -462,7 +462,7 @@ class DirectMailForm(ui.Modal, title="Comunicazione Istituzionale"):
 
     async def on_submit(self, interaction: Interaction):
         emoji_pp = "<:pp:1385030497578651738>"
-        emoji_sistema = "<:sistema:123456789012345678>"  # Sostituisci con l'ID reale
+        emoji_sistema = "<:sistema:123456789012345678>"  # Sostituisci con ID reale
 
         embed = discord.Embed(
             title=f"{emoji_pp} {self.oggetto.value}",
@@ -476,7 +476,7 @@ class DirectMailForm(ui.Modal, title="Comunicazione Istituzionale"):
         )
         embed.set_footer(
             text="Sistema di Comunicazioni Dirette - Polizia Penitenziaria",
-            icon_url="https://cdn.discordapp.com/emojis/123456789012345678.png"  # Sostituisci con l'URL dell'emoji :sistema:
+            icon_url="https://cdn.discordapp.com/emojis/123456789012345678.png"  # URL emoji sistema
         )
 
         try:
@@ -490,6 +490,11 @@ class DirectMailForm(ui.Modal, title="Comunicazione Istituzionale"):
                 "❌ Impossibile recapitare la comunicazione: l'utente ha i DM disabilitati.",
                 ephemeral=True
             )
+
+@bot.tree.command(name="direct", description="Invia una comunicazione istituzionale via DM.")
+@app_commands.describe(utente="Utente destinatario del messaggio")
+async def direct(interaction: Interaction, utente: discord.Member):
+    await interaction.response.send_modal(DirectMailForm(utente))
 
 
 
