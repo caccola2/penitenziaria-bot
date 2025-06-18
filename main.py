@@ -439,7 +439,7 @@ async def destituzione_operatore(interaction: Interaction, utente: discord.Membe
 
 
 # ✅ Direct
-class DirectMailForm(ui.Modal, title="Messaggio Istituzionale"):
+class DirectMailForm(ui.Modal, title="Comunicazione Istituzionale"):
     oggetto = ui.TextInput(
         label="Oggetto della Comunicazione",
         placeholder="Es. Notifica Provvedimento Disciplinare",
@@ -462,20 +462,21 @@ class DirectMailForm(ui.Modal, title="Messaggio Istituzionale"):
 
     async def on_submit(self, interaction: Interaction):
         emoji_pp = "<:pp:1385030497578651738>"
-        emoji_sistema = "<:sistema:123456789012345678>"  # <-- Sostituisci con l'ID corretto dell'emoji :sistema:
+        emoji_sistema = "<:sistema:123456789012345678>"  # Sostituisci con l'ID reale
 
         embed = discord.Embed(
             title=f"{emoji_pp} {self.oggetto.value}",
             description=(
                 f"**Corpo di Polizia Penitenziaria**\n\n"
                 f"{self.contenuto.value}\n\n"
-                f"———\n"
+                f"—\n"
                 f"*{self.mittente.value}*"
             ),
             color=discord.Color.dark_blue()
         )
         embed.set_footer(
-            text=f"{emoji_sistema} Sistema di Comunicazioni Dirette - Polizia Penitenziaria"
+            text="Sistema di Comunicazioni Dirette - Polizia Penitenziaria",
+            icon_url="https://cdn.discordapp.com/emojis/123456789012345678.png"  # Sostituisci con l'URL dell'emoji :sistema:
         )
 
         try:
@@ -489,6 +490,7 @@ class DirectMailForm(ui.Modal, title="Messaggio Istituzionale"):
                 "❌ Impossibile recapitare la comunicazione: l'utente ha i DM disabilitati.",
                 ephemeral=True
             )
+
 
 
 # 🚀 Avvio
