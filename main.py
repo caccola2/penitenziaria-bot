@@ -439,6 +439,9 @@ async def destituzione_operatore(interaction: Interaction, utente: discord.Membe
 
 
 # ✅ Direct
+from discord import app_commands, Interaction, ui, TextStyle
+import discord
+
 class DirectMailForm(ui.Modal, title="Comunicazione Istituzionale"):
     oggetto = ui.TextInput(
         label="Oggetto della Comunicazione",
@@ -461,11 +464,11 @@ class DirectMailForm(ui.Modal, title="Comunicazione Istituzionale"):
         self.utente = utente
 
     async def on_submit(self, interaction: Interaction):
-        emoji_pp = "<:pp:1385030497578651738>"
-        emoji_sistema = "<:sistema:123456789012345678>"  # Sostituisci con ID reale
+        emoji_intestazione = "📎"
+        emoji_footer = "📡"
 
         embed = discord.Embed(
-            title=f"{emoji_pp} {self.oggetto.value}",
+            title=f"{emoji_intestazione} {self.oggetto.value}",
             description=(
                 f"**Corpo di Polizia Penitenziaria**\n\n"
                 f"{self.contenuto.value}\n\n"
@@ -475,14 +478,13 @@ class DirectMailForm(ui.Modal, title="Comunicazione Istituzionale"):
             color=discord.Color.dark_blue()
         )
         embed.set_footer(
-            text="Sistema di Comunicazioni Dirette - Polizia Penitenziaria",
-            icon_url="https://cdn.discordapp.com/emojis/123456789012345678.png"  # URL emoji sistema
+            text=f"{emoji_footer} Sistema di Comunicazioni Dirette - Polizia Penitenziaria"
         )
 
         try:
             await self.utente.send(embed=embed)
             await interaction.response.send_message(
-                f"{emoji_pp} Comunicazione inviata con successo.",
+                f"{emoji_intestazione} Comunicazione inviata con successo.",
                 ephemeral=True
             )
         except discord.Forbidden:
