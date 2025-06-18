@@ -439,64 +439,63 @@ async def destituzione_operatore(interaction: Interaction, utente: discord.Membe
 
 
 # ✅ Direct
-class DirectMailForm(ui.Modal, title="Messaggio Istituzionale"):
-    oggetto = ui.TextInput(
-        label="Oggetto della Comunicazione",
-        placeholder="Es. Notifica Provvedimento Disciplinare",
-        style=TextStyle.short,
-        max_length=45
-    )
-    mittente = ui.TextInput(
-        label="Mittente (Nome o Reparto)",
-        placeholder="Es. Ufficio Disciplina - Corpo di Polizia Penitenziaria",
-        style=TextStyle.short,
+class DirectMailModal(discord.ui.Modal, title="Invia una Mail Elegante"):
+
+    oggetto = discord.ui.TextInput(
+        label="Oggetto",
+        placeholder="Inserisci il titolo della mail",
         max_length=100
     )
-    contenuto = ui.TextInput(
-        label="Corpo della Comunicazione",
-        placeholder="Scrivi il contenuto della comunicazione in modo formale...",
-        style=TextStyle.paragraph,
+
+    contenuto = discord.ui.TextInput(
+        label="Contenuto del messaggio",
+        placeholder="Scrivi qui il corpo della mail...",
+        style=discord.TextStyle.paragraph,
         max_length=1000
     )
 
-    def __init__(self, utente: discord.Member):
+    def __init__(self, user: discord.User):
         super().__init__()
-        self.utente = utente
+        self.user = user
 
-    async def on_submit(self, interaction: Interaction):
-        emoji_graffetta = "⦗"
-        emoji_ingranaggio = "⚙️"
-
+    async def on_submit(self, interaction: discord.Interaction):
         embed = discord.Embed(
-            title=f"{emoji_graffetta} {self.oggetto.value} {emoji_graffetta}",
-            description=(
-                f"**Corpo di Polizia Penitenziaria**\n\n"
-                f"{self.contenuto.value}\n\n"
-                f"———\n"
-                f"*{self.mittente.value}*"
-            ),
-            color=discord.Color.blue()
+            title=f"📨 Nuova Mail per {self.user.display_name}",
+            description=self.contenuto.value,
+            color=0x3498db  # Blu chiaro elegante
         )
-        embed.set_footer(
-            text=f"{emoji_ingranaggio} Sistema di Comunicazioni Dirette - Polizia Penitenziaria"
+        embed.set_author(
+            name=interaction.user.display_name,
+            icon_url=interaction.user.avatar.url if interaction.user.avatar else None
+        )
+        embed.set_footer(text=f"Oggetto: {self.oggetto.value}")
+
+        webhook = discord.SyncWebhook.from_url(WEBHOOK_URL)
+        webhook.send(
+            username="MailBot 📬",
+            avatar_url="https://cdn-icons-png.flaticon.com/512/561/561127.png",
+            embed=embed
         )
 
-        try:
-            await self.utente.send(embed=embed)
-            await interaction.response.send_message(
-                f"{emoji_graffetta} Comunicazione inviata con successo.",
-                ephemeral=True
-            )
-        except discord.Forbidden:
-            await interaction.response.send_message(
-                "❌ Impossibile recapitare la comunicazione: l'utente ha i DM disabilitati.",
-                ephemeral=True
-            )
+        await interaction.response.send_message(
+            f"✉️ Mail inviata con successo a **{self.user.mention}**.", ephemeral=True
+        )
 
-@bot.tree.command(name="direct", description="Invia una comunicazione istituzionale via DM.")
-@app_commands.describe(utente="Utente destinatario del messaggio")
-async def direct(interaction: Interaction, utente: discord.Member):
-    await interaction.response.send_modal(DirectMailForm(utente))
+# Inizializza il bot
+bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
+
+@bot.event
+async def on_ready():
+    print(f"✅ Bot online come {bot.user}")
+    try:
+        synced = await bot.tree.sync()
+        print(f"🔁 Comandi sincronizzati: {len(synced)}")
+    except Exception as e:
+        print(f"Errore sync: {e}")
+
+@bot.tree.command(name="direct", description="Invia una mail privata via webhook a un utente")
+async def direct(interaction: discord.Interaction, utente: discord.User):
+    await interaction.response.send_modal(DirectMailModal(user=utente))
     
 
 
