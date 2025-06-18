@@ -278,6 +278,66 @@ async def rimprovero_operatore(interaction: Interaction, utente: discord.Member)
         return
     await interaction.response.send_modal(RimproveroForm(utente=utente))
 
+# ✅ Sospensione cautelare
+class SospensioneCautelareForm(ui.Modal, title="⛔ Form Sospensione Cautelare"):
+    qualifica_operatore = ui.TextInput(label="Qualifica Operatore", style=TextStyle.short)
+    motivazione = ui.TextInput(label="Motivazione (opzionale)", style=TextStyle.paragraph, required=False)
+    status = ui.TextInput(label="Status (Attivo o Non attivo)", style=TextStyle.short)
+
+    def __init__(self, utente: discord.Member):
+        super().__init__()
+        self.utente = utente
+
+    async def on_submit(self, interaction: Interaction):
+        canale = interaction.client.get_channel(1251591493857312779)
+        emoji_qualifica = trova_emoji(self.qualifica_operatore.value, interaction.guild.emojis)
+        motivazione = self.motivazione.value.strip()
+        status_norm = self.status.value.strip().lower()
+
+        if status_norm not in ["attivo", "non attivo"]:
+            await interaction.response.send_message("❌ Lo status deve essere 'Attivo' o 'Non attivo'.", ephemeral=True)
+            return
+
+        if status_norm == "attivo":
+            motivazione_testo = motivazione or "a seguito del provvedimento disposto dall'Autorità Giudiziaria"
+            messaggio = (
+                f"> **{self.qualifica_operatore.value}** {emoji_qualifica} {self.utente.mention} riceve la **SOSPENSIONE CAUTELARE** {motivazione_testo}\n\n"
+                f"*Provvedimento disposto da: {interaction.user.mention}*"
+            )
+        else:
+            motivazione_testo = motivazione or "a seguito dell'assoluzione disposta dall'Autorità Giudiziaria"
+            messaggio = (
+                f"> **{self.qualifica_operatore.value}** {emoji_qualifica} {self.utente.mention} termina la **SOSPENSIONE CAUTELARE** {motivazione_testo}\n\n"
+                f"*Provvedimento revocato da: {interaction.user.mention}*"
+            )
+
+        try:
+            embed_dm = discord.Embed(
+                title="⛔ Provvedimento di Sospensione Cautelare",
+                description=messaggio,
+                color=discord.Color.orange()
+            )
+            embed_dm.set_footer(
+                text=f"Status: {self.status.value.title()} • Eseguito da: {interaction.user.display_name}",
+                icon_url=interaction.user.display_avatar.url
+            )
+            await self.utente.send(embed=embed_dm)
+        except discord.Forbidden:
+            pass
+
+        await canale.send(messaggio)
+        await interaction.response.send_message("⛔ Sospensione cautelare registrata!", ephemeral=True)
+
+@bot.tree.command(name="sospensione-cautelare", description="Registra una sospensione cautelare.")
+@app_commands.describe(utente="Utente interessato dalla sospensione")
+async def sospensione_cautelare(interaction: Interaction, utente: discord.Member):
+    ruoli_autorizzati = [896679736418381855, 815496510653333524]
+    user_roles = [role.id for role in interaction.user.roles]
+    if not any(role_id in user_roles for role_id in ruoli_autorizzati):
+        await interaction.response.send_message("❌ Permessi insufficienti.", ephemeral=True)
+        return
+    await interaction.response.send_modal(SospensioneCautelareForm(utente=utente))
+
 # 🚀 Avvio
 if __name__ == "__main__":
     token = os.getenv("DISCORD_TOKEN")
