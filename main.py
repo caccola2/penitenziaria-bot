@@ -465,7 +465,7 @@ class DirectMailForm(ui.Modal, title="Messaggio Istituzionale"):
 
     async def on_submit(self, interaction: Interaction):
         emoji_pp = "<:pp:1385030497578651738>"
-        emoji_sistema = "<:sistema:123456789012345678>"  # sostituisci con ID reale
+        emoji_sistema = "<:sistema:123456789012345678>"
 
         embed = discord.Embed(
             title=f"{emoji_pp} {self.oggetto.value}",
@@ -493,11 +493,13 @@ class DirectMailForm(ui.Modal, title="Messaggio Istituzionale"):
                 ephemeral=True
             )
 
+
 @bot.tree.command(name="direct", description="Invia una comunicazione istituzionale via DM.")
 @app_commands.describe(utente="Utente destinatario del messaggio")
 async def direct(interaction: Interaction, utente: discord.Member):
-    # Apri direttamente il modal, senza defer
+    # RISPOSTA IMMEDIATA: APRI IL MODAL SUBITO, senza defer!
     await interaction.response.send_modal(DirectMailForm(utente))
+
 
 
 # 🚀 Avvio
