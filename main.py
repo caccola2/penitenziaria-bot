@@ -464,13 +464,13 @@ class DirectMailForm(ui.Modal, title="Messaggio Istituzionale"):
         self.utente = utente
 
     async def on_submit(self, interaction: Interaction):
-        emoji_pp = "<:pp:1385030497578651738>"
-        emoji_sistema = "<:sistema:123456789012345678>"
+        emoji_graffetta = "⦗"
+        emoji_ingranaggio = "⚙️"
 
         embed = discord.Embed(
-            title=f"{emoji_pp} {self.oggetto.value}",
+            title=f"{emoji_graffetta} {self.oggetto.value}",
             description=(
-                f"**⦗Corpo di Polizia Penitenziaria⦘**\n\n"
+                f"**{emoji_graffetta} Corpo di Polizia Penitenziaria {emoji_graffetta}**\n\n"
                 f"{self.contenuto.value}\n\n"
                 f"———\n"
                 f"*{self.mittente.value}*"
@@ -478,13 +478,13 @@ class DirectMailForm(ui.Modal, title="Messaggio Istituzionale"):
             color=discord.Color.dark_blue()
         )
         embed.set_footer(
-            text=f"{emoji_sistema} Sistema di Comunicazioni Dirette - Polizia Penitenziaria"
+            text=f"{emoji_ingranaggio} Sistema di Comunicazioni Dirette - Polizia Penitenziaria"
         )
 
         try:
             await self.utente.send(embed=embed)
             await interaction.response.send_message(
-                f"{emoji_pp} Comunicazione inviata con successo.",
+                f"{emoji_graffetta} Comunicazione inviata con successo.",
                 ephemeral=True
             )
         except discord.Forbidden:
@@ -497,9 +497,7 @@ class DirectMailForm(ui.Modal, title="Messaggio Istituzionale"):
 @bot.tree.command(name="direct", description="Invia una comunicazione istituzionale via DM.")
 @app_commands.describe(utente="Utente destinatario del messaggio")
 async def direct(interaction: Interaction, utente: discord.Member):
-    # RISPOSTA IMMEDIATA: APRI IL MODAL SUBITO, senza defer!
     await interaction.response.send_modal(DirectMailForm(utente))
-
 
 
 # 🚀 Avvio
