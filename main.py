@@ -439,7 +439,7 @@ async def destituzione_operatore(interaction: Interaction, utente: discord.Membe
 
 
 # ✅ Direct
-class DirectMailModal(discord.ui.Modal, title="Invia una Mail Elegante"):
+class DirectMailModal(discord.ui.Modal, title="Comunicazione Istituzionale"):
 
     oggetto = discord.ui.TextInput(
         label="Oggetto",
@@ -451,7 +451,7 @@ class DirectMailModal(discord.ui.Modal, title="Invia una Mail Elegante"):
         label="Contenuto del messaggio",
         placeholder="Scrivi qui il corpo della mail...",
         style=discord.TextStyle.paragraph,
-        max_length=1000
+        max_length=5000
     )
 
     def __init__(self, user: discord.User):
@@ -459,6 +459,9 @@ class DirectMailModal(discord.ui.Modal, title="Invia una Mail Elegante"):
         self.user = user
 
     async def on_submit(self, interaction: discord.Interaction):
+        # Definizione URL Webhook direttamente qui
+        webhook_url = "INSERISCI_LA_TUA_WEBHOOK_URL"
+
         embed = discord.Embed(
             title=f"📨 Nuova Mail per {self.user.display_name}",
             description=self.contenuto.value,
@@ -470,7 +473,7 @@ class DirectMailModal(discord.ui.Modal, title="Invia una Mail Elegante"):
         )
         embed.set_footer(text=f"Oggetto: {self.oggetto.value}")
 
-        webhook = discord.SyncWebhook.from_url(WEBHOOK_URL)
+        webhook = discord.SyncWebhook.from_url(webhook_url)
         webhook.send(
             username="MailBot 📬",
             avatar_url="https://cdn-icons-png.flaticon.com/512/561/561127.png",
@@ -481,7 +484,6 @@ class DirectMailModal(discord.ui.Modal, title="Invia una Mail Elegante"):
             f"✉️ Mail inviata con successo a **{self.user.mention}**.", ephemeral=True
         )
 
-# Inizializza il bot
 bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 
 @bot.event
