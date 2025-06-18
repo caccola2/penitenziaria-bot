@@ -439,7 +439,7 @@ async def destituzione_operatore(interaction: Interaction, utente: discord.Membe
 
 
 # ✅ Direct
-class DirectMailForm(ui.Modal, title="📎 Comunicazione Istituzionale - Polizia Penitenziaria"):
+class DirectMailForm(ui.Modal, title="📎 Messaggio Istituzionale"):
     oggetto = ui.TextInput(
         label="Oggetto della Comunicazione",
         placeholder="Es. Notifica Provvedimento Disciplinare",
@@ -473,7 +473,7 @@ class DirectMailForm(ui.Modal, title="📎 Comunicazione Istituzionale - Polizia
         )
         embed.set_footer(
             text="Sistema Comunicazioni Dirette • Sezione Disciplinare",
-            icon_url="https://i.imgur.com/dJbQfAO.png"  # Cambia con il logo se ne hai uno
+            icon_url="https://i.imgur.com/dJbQfAO.png"
         )
 
         try:
