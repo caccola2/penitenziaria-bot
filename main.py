@@ -388,6 +388,87 @@ async def interdizione_operatore(interaction: Interaction, utente: discord.Membe
     await interaction.response.send_modal(InterdizioneForm(utente=utente))
 
 
+# ✅ Destituzione operatore
+class DestituzioneForm(ui.Modal, title="📤 Form Destituzione Operatore"):
+    qualifica_operatore = ui.TextInput(label="Qualifica Operatore", style=TextStyle.short)
+    motivazione = ui.TextInput(label="Motivazione della destituzione", style=TextStyle.paragraph)
+
+    def __init__(self, utente: discord.Member):
+        super().__init__()
+        self.utente = utente
+
+    async def on_submit(self, interaction: Interaction):
+        canale = interaction.client.get_channel(1251591493857312779)
+        emoji_qualifica = trova_emoji(self.qualifica_operatore.value, interaction.guild.emojis)
+        motivazione = self.motivazione.value.strip()
+
+        messaggio = (
+            f"> **{self.qualifica_operatore.value}** {emoji_qualifica} "
+            f"{self.utente.mention} viene **DESTITUITO** {motivazione}\n\n"
+            f"*Destituito da: {interaction.user.mention}*"
+        )
+
+        try:
+            embed_dm = discord.Embed(
+                title="📤 Destituzione Ricevuta",
+                description=(
+                    f"> **{self.qualifica_operatore.value}** {emoji_qualifica}, hai ricevuto una destituzione: {motivazione}"
+                ),
+                color=discord.Color.orange()
+            )
+            embed_dm.set_footer(
+                text=f"Destituzione da: {interaction.user.display_name}",
+                icon_url=interaction.user.display_avatar.url
+            )
+            await self.utente.send(embed=embed_dm)
+        except discord.Forbidden:
+            pass
+
+        await canale.send(messaggio)
+        await interaction.response.send_message("📤 Destituzione inviata!", ephemeral=True)
+
+@bot.tree.command(name="destituzione-operatore", description="Destituisci un operatore compilando il form.")
+@app_commands.describe(utente="Utente da destituire")
+async def destituzione_operatore(interaction: Interaction, utente: discord.Member):
+    ruoli_autorizzati = [896679736418381855, 815496510653333524]
+    user_roles = [role.id for role in interaction.user.roles]
+    if not any(role_id in user_roles for role_id in ruoli_autorizzati):
+        await interaction.response.send_message("❌ Permessi insufficienti.", ephemeral=True)
+        return
+    await interaction.response.send_modal(DestituzioneForm(utente=utente))
+
+
+# ✅ Direct
+class DirectMailForm(ui.Modal, title="📨 Invio Messaggio Diretto"):
+    oggetto = ui.TextInput(label="Oggetto del Messaggio", placeholder="Es. Comunicazione ufficiale", style=TextStyle.short)
+    mittente = ui.TextInput(label="Mittente", placeholder="Es. Ufficio Disciplinare", style=TextStyle.short)
+    contenuto = ui.TextInput(label="Contenuto", placeholder="Scrivi qui il contenuto della comunicazione...", style=TextStyle.paragraph)
+
+    def __init__(self, utente: discord.Member):
+        super().__init__()
+        self.utente = utente
+
+    async def on_submit(self, interaction: Interaction):
+        embed = discord.Embed(
+            title=f"📩 {self.oggetto.value}",
+            description=self.contenuto.value,
+            color=discord.Color.blurple()
+        )
+        embed.set_footer(text=f"Da: {self.mittente.value}")
+
+        try:
+            await self.utente.send(embed=embed)
+            await interaction.response.send_message("✅ Messaggio inviato con successo via DM.", ephemeral=True)
+        except discord.Forbidden:
+            await interaction.response.send_message("❌ Impossibile inviare il messaggio: l'utente ha i DM chiusi.", ephemeral=True)
+
+@bot.tree.command(name="direct", description="Invia un messaggio personale (stile email) a un utente via DM.")
+@app_commands.describe(utente="Utente a cui inviare il messaggio")
+async def direct(interaction: Interaction, utente: discord.Member):
+    await interaction.response.send_modal(DirectMailForm(utente=utente))
+
+
+
 # 🚀 Avvio
 if __name__ == "__main__":
     token = os.getenv("DISCORD_TOKEN")
