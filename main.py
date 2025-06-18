@@ -493,15 +493,11 @@ class DirectMailForm(ui.Modal, title="Messaggio Istituzionale"):
                 ephemeral=True
             )
 
-
 @bot.tree.command(name="direct", description="Invia una comunicazione istituzionale via DM.")
 @app_commands.describe(utente="Utente destinatario del messaggio")
 async def direct(interaction: Interaction, utente: discord.Member):
-    # Risposta differita per evitare timeout
-    await interaction.response.defer(ephemeral=True)
-    # Apri il modal subito dopo il defer
-    await interaction.followup.send_modal(DirectMailForm(utente))
-
+    # Apri direttamente il modal, senza defer
+    await interaction.response.send_modal(DirectMailForm(utente))
 
 
 # 🚀 Avvio
