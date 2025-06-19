@@ -437,11 +437,25 @@ async def destituzione_operatore(interaction: Interaction, utente: discord.Membe
         return
     await interaction.response.send_modal(DestituzioneForm(utente=utente))
 
-# ✅ /pec
 class PecForm(ui.Modal, title="📬 Invio Comunicazione PEC"):
-    oggetto = ui.TextInput(label="Oggetto", style=TextStyle.short)
-    contenuto = ui.TextInput(label="Contenuto", style=TextStyle.paragraph)
-    firma = ui.TextInput(label="Firma (opzionale)", style=TextStyle.short, required=False)
+    oggetto = ui.TextInput(
+        label="Oggetto del provvedimento",
+        style=TextStyle.short,
+        placeholder="Es: Notifica provvedimento disciplinare",
+        required=True
+    )
+    contenuto = ui.TextInput(
+        label="Contenuto del messaggio",
+        style=TextStyle.paragraph,
+        placeholder="Testo completo della comunicazione",
+        required=True
+    )
+    firma = ui.TextInput(
+        label="Firma (es. Grado e Nome)",
+        style=TextStyle.short,
+        placeholder="Es: Vice Ispettore - Mario Rossi",
+        required=True
+    )
 
     def __init__(self, destinatario: discord.Member):
         super().__init__()
@@ -449,27 +463,30 @@ class PecForm(ui.Modal, title="📬 Invio Comunicazione PEC"):
 
     async def on_submit(self, interaction: Interaction):
         embed = discord.Embed(
-            title="📩 Comunicazione Ufficiale",
-            description=f"**Oggetto:** {self.oggetto.value}",
+            title="Notifica provvedimento",
+            description=(
+                "**Corpo di Polizia Penitenziaria**\n\n"
+                f"{self.contenuto.value.strip()}\n\n"
+                f"__\n*{self.firma.value.strip()}*"
+            ),
             color=discord.Color.dark_blue()
         )
-        embed.add_field(name="📜 Contenuto", value=self.contenuto.value, inline=False)
-        embed.set_footer(text=self.firma.value.strip() or "Sistema Penitenziario", icon_url=interaction.guild.icon.url)
-        embed.timestamp = interaction.created_at
+        embed.set_footer(text="Sistema di Comunicazioni Dirette – Polizia Penitenziaria")
 
         try:
             await self.destinatario.send(embed=embed)
-            await interaction.response.send_message("✅ PEC inviata in DM.", ephemeral=True)
-        except:
-            await interaction.response.send_message("❌ DM bloccati per l'utente.", ephemeral=True)
+            await interaction.response.send_message("✅ PEC inviata correttamente via DM.", ephemeral=True)
+        except discord.Forbidden:
+            await interaction.response.send_message("❌ L'utente ha i DM disattivati.", ephemeral=True)
 
-@bot.tree.command(name="pec", description="Invia una comunicazione ufficiale (PEC).")
-@app_commands.describe(destinatario="Utente destinatario")
+@bot.tree.command(name="pec", description="Invia una comunicazione ufficiale in DM.")
+@app_commands.describe(destinatario="Utente destinatario della PEC")
 async def pec(interaction: Interaction, destinatario: discord.Member):
-    autorizzati = [819251679081791498, 896679736418381855, 815496510653333524]
-    if not any(r.id in autorizzati for r in interaction.user.roles):
-        await interaction.response.send_message("❌ Non hai i permessi.", ephemeral=True)
+    RUOLI_AUTORIZZATI = [819251679081791498, 896679736418381855, 815496510653333524]
+    if not any(r.id in RUOLI_AUTORIZZATI for r in interaction.user.roles):
+        await interaction.response.send_message("❌ Non hai i permessi per usare questo comando.", ephemeral=True)
         return
+
     await interaction.response.send_modal(PecForm(destinatario))
 
 
