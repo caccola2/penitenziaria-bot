@@ -438,36 +438,6 @@ async def destituzione_operatore(interaction: Interaction, utente: discord.Membe
     await interaction.response.send_modal(DestituzioneForm(utente=utente))
 
 
-# ✅ /pec
-class PECModal(discord.ui.Modal, title="📩 Invio PEC"):
-    oggetto = TextInput(label="Oggetto", style=TextStyle.short, required=True)
-    corpo = TextInput(label="Corpo del testo", style=TextStyle.paragraph, required=True)
-    mittente = TextInput(label="Mittente", style=TextStyle.short, required=True)
-
-    def __init__(self, destinatario: discord.User):
-        super().__init__()
-        self.destinatario = destinatario
-
-    async def on_submit(self, interaction: Interaction):
-        embed = discord.Embed(
-            title=f"📩 PEC - {self.oggetto.value}",
-            description=self.corpo.value,
-            color=discord.Color.from_str("#003366")
-        )
-        embed.add_field(name="Mittente", value=self.mittente.value, inline=False)
-        embed.set_footer(text="Servizio di Comunicazione - Polizia Penitenziaria")
-        embed.set_timestamp()
-
-        try:
-            await self.destinatario.send(embed=embed)
-            await interaction.response.send_message("✅ PEC inviata correttamente.", ephemeral=True)
-        except discord.Forbidden:
-            await interaction.response.send_message("❌ Impossibile inviare la PEC (DM chiusi o permessi insufficienti).", ephemeral=True)
-
-@bot.tree.command(name="pec", description="Invia una PEC elegante via DM")
-@app_commands.describe(destinatario="Utente che riceverà la PEC")
-async def pec_command(interaction: Interaction, destinatario: discord.User):
-    await interaction.response.send_modal(PECModal(destinatario))
 
 
 
