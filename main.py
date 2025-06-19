@@ -441,7 +441,7 @@ async def destituzione_operatore(interaction: Interaction, utente: discord.Membe
 # ✅ /pec
 class PecForm(ui.Modal, title="Invio Comunicazione PEC"):
     oggetto = ui.TextInput(
-        label="⟨ Oggetto del provvedimento",
+        label="Oggetto",
         style=TextStyle.short,
         placeholder="Es: Notifica provvedimento disciplinare",
         required=True
@@ -493,6 +493,58 @@ async def pec(interaction: Interaction, destinatario: discord.Member):
         return
 
     await interaction.response.send_modal(PecForm(destinatario))
+
+
+# ✅ Reintegro
+class ReintegroForm(ui.Modal, title="Form Reintegro Operatore"):
+    qualifica_operatore = ui.TextInput(label="Qualifica Operatore", style=TextStyle.short)
+    reparto_assegnazione = ui.TextInput(label="Reparto di Assegnazione", style=TextStyle.short)
+
+    def __init__(self, utente: discord.Member):
+        super().__init__()
+        self.utente = utente
+
+    async def on_submit(self, interaction: Interaction):
+        canale = interaction.client.get_channel(791774585007767593)
+        emoji_qualifica = trova_emoji(self.qualifica_operatore.value, interaction.guild.emojis)
+        reparto = self.reparto_assegnazione.value.strip()
+
+        messaggio = (
+            f"> L'**{self.qualifica_operatore.value}** {emoji_qualifica} {self.utente.mention} "
+            f"conclude il corso d'aggiornamento presso la Direzione delle Scuole. "
+            f"Esso viene assegnato al **{reparto}**, presso la Casa Circondariale \"G. Salvia\".\n\n"
+            f"*Il suddetto {self.qualifica_operatore.value} dovrà affrontare un primo periodo di prova, "
+            "della durata iniziale di nr. 7 (sette) giorni, sotto la supervisione della Direzione del Personale.*"
+        )
+
+        try:
+            embed_dm = discord.Embed(
+                title="Reintegro Ricevuto",
+                description=(
+                    f"L'**{self.qualifica_operatore.value}** {emoji_qualifica}, hai concluso il corso d'aggiornamento e sei assegnato al reparto {reparto}."
+                ),
+                color=discord.Color.green()
+            )
+            embed_dm.set_footer(
+                text=f"Reintegrato da: {interaction.user.display_name}",
+                icon_url=interaction.user.display_avatar.url
+            )
+            await self.utente.send(embed=embed_dm)
+        except discord.Forbidden:
+            pass
+
+        await canale.send(messaggio)
+        await interaction.response.send_message("Reintegro inviato correttamente!", ephemeral=True)
+
+@bot.tree.command(name="reintegro-operatore", description="Reintegra un operatore compilando il form.")
+@app_commands.describe(utente="Utente da reintegrare")
+async def reintegro_operatore(interaction: Interaction, utente: discord.Member):
+    ruoli_autorizzati = [896679736418381855, 815496510653333524]
+    user_roles = [role.id for role in interaction.user.roles]
+    if not any(role_id in user_roles for role_id in ruoli_autorizzati):
+        await interaction.response.send_message("❌ Permessi insufficienti.", ephemeral=True)
+        return
+    await interaction.response.send_modal(ReintegroForm(utente=utente))
 
 
 
