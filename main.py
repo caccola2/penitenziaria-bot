@@ -438,7 +438,59 @@ async def destituzione_operatore(interaction: Interaction, utente: discord.Membe
     await interaction.response.send_modal(DestituzioneForm(utente=utente))
 
 
+# ✅ Modale per la creazione della PEC
+class PECForm(discord.ui.Modal, title="✉️ Componi la tua PEC"):
 
+    destinatario = discord.ui.TextInput(
+        label="Destinatario",
+        placeholder="es. mario.rossi@pec.it",
+        required=True,
+        style=discord.TextStyle.short
+    )
+
+    oggetto = discord.ui.TextInput(
+        label="Oggetto",
+        placeholder="Oggetto della PEC",
+        required=True,
+        style=discord.TextStyle.short
+    )
+
+    corpo = discord.ui.TextInput(
+        label="Messaggio",
+        placeholder="Scrivi il corpo della PEC...",
+        required=True,
+        style=discord.TextStyle.paragraph,
+        max_length=2000
+    )
+
+    def __init__(self, target_user: discord.User):
+        super().__init__()
+        self.target_user = target_user
+
+    async def on_submit(self, interaction: discord.Interaction):
+        embed = discord.Embed(
+            title="📬 Nuova PEC ricevuta",
+            description=f"**Destinatario PEC:** {self.destinatario.value}\n"
+                        f"**Oggetto:** {self.oggetto.value}\n\n"
+                        f"{self.corpo.value}",
+            color=discord.Color.dark_blue()
+        )
+        embed.set_footer(text="Sistema PEC - Bot Discord")
+
+        try:
+            await self.target_user.send(embed=embed)
+            await interaction.response.send_message("✅ PEC inviata con successo via DM!", ephemeral=True)
+        except discord.Forbidden:
+            await interaction.response.send_message("❌ Impossibile inviare la PEC: utente con DM bloccati.", ephemeral=True)
+
+# Comando da aggiungere
+@app_commands.command(name="pec", description="Invia una PEC elegante via DM a un utente")
+@app_commands.describe(utente="Utente destinatario della PEC")
+async def pec(interaction: discord.Interaction, utente: discord.User):
+    try:
+        await interaction.response.send_modal(PECForm(target_user=utente))
+    except discord.Forbidden:
+        await interaction.response.send_message("❌ Non posso aprire il form. Controlla i permessi.", ephemeral=True)
 
 
 # 🚀 Avvio
