@@ -438,67 +438,37 @@ async def destituzione_operatore(interaction: Interaction, utente: discord.Membe
     await interaction.response.send_modal(DestituzioneForm(utente=utente))
 
 
-# ✅ Direct
-class DirectMailModal(discord.ui.Modal, title="Comunicazione Istituzionale"):
+# ✅ /pec
+class PECModal(discord.ui.Modal, title="📩 Invio PEC"):
+    oggetto = TextInput(label="Oggetto", style=TextStyle.short, required=True)
+    corpo = TextInput(label="Corpo del testo", style=TextStyle.paragraph, required=True)
+    mittente = TextInput(label="Mittente", style=TextStyle.short, required=True)
 
-    oggetto = discord.ui.TextInput(
-        label="Oggetto",
-        placeholder="Inserisci il titolo della mail",
-        max_length=100
-    )
-
-    contenuto = discord.ui.TextInput(
-        label="Contenuto del messaggio",
-        placeholder="Scrivi qui il corpo della mail...",
-        style=discord.TextStyle.paragraph,
-        max_length=5000
-    )
-
-    def __init__(self, user: discord.User):
+    def __init__(self, destinatario: discord.User):
         super().__init__()
-        self.user = user
+        self.destinatario = destinatario
 
-    async def on_submit(self, interaction: discord.Interaction):
-        # Definizione URL Webhook direttamente qui
-        webhook_url = "INSERISCI_LA_TUA_WEBHOOK_URL"
-
+    async def on_submit(self, interaction: Interaction):
         embed = discord.Embed(
-            title=f"📨 Nuova Mail per {self.user.display_name}",
-            description=self.contenuto.value,
-            color=0x3498db  # Blu chiaro elegante
+            title=f"📩 PEC - {self.oggetto.value}",
+            description=self.corpo.value,
+            color=discord.Color.from_str("#003366")
         )
-        embed.set_author(
-            name=interaction.user.display_name,
-            icon_url=interaction.user.avatar.url if interaction.user.avatar else None
-        )
-        embed.set_footer(text=f"Oggetto: {self.oggetto.value}")
+        embed.add_field(name="Mittente", value=self.mittente.value, inline=False)
+        embed.set_footer(text="Servizio di Comunicazione - Polizia Penitenziaria")
+        embed.set_timestamp()
 
-        webhook = discord.SyncWebhook.from_url(webhook_url)
-        webhook.send(
-            username="MailBot 📬",
-            avatar_url="https://cdn-icons-png.flaticon.com/512/561/561127.png",
-            embed=embed
-        )
+        try:
+            await self.destinatario.send(embed=embed)
+            await interaction.response.send_message("✅ PEC inviata correttamente.", ephemeral=True)
+        except discord.Forbidden:
+            await interaction.response.send_message("❌ Impossibile inviare la PEC (DM chiusi o permessi insufficienti).", ephemeral=True)
 
-        await interaction.response.send_message(
-            f"✉️ Mail inviata con successo a **{self.user.mention}**.", ephemeral=True
-        )
+@bot.tree.command(name="pec", description="Invia una PEC elegante via DM")
+@app_commands.describe(destinatario="Utente che riceverà la PEC")
+async def pec_command(interaction: Interaction, destinatario: discord.User):
+    await interaction.response.send_modal(PECModal(destinatario))
 
-bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
-
-@bot.event
-async def on_ready():
-    print(f"✅ Bot online come {bot.user}")
-    try:
-        synced = await bot.tree.sync()
-        print(f"🔁 Comandi sincronizzati: {len(synced)}")
-    except Exception as e:
-        print(f"Errore sync: {e}")
-
-@bot.tree.command(name="direct", description="Invia una mail privata via webhook a un utente")
-async def direct(interaction: discord.Interaction, utente: discord.User):
-    await interaction.response.send_modal(DirectMailModal(user=utente))
-    
 
 
 # 🚀 Avvio
