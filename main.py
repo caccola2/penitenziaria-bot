@@ -437,66 +437,40 @@ async def destituzione_operatore(interaction: Interaction, utente: discord.Membe
         return
     await interaction.response.send_modal(DestituzioneForm(utente=utente))
 
+# ✅ /pec
+class PecForm(ui.Modal, title="📬 Invio Comunicazione PEC"):
+    oggetto = ui.TextInput(label="Oggetto", style=TextStyle.short)
+    contenuto = ui.TextInput(label="Contenuto", style=TextStyle.paragraph)
+    firma = ui.TextInput(label="Firma (opzionale)", style=TextStyle.short, required=False)
 
-# ✅ Modale per la creazione della PEC
-class PECForm(discord.ui.Modal, title="✉️ Componi la tua PEC"):
+    def __init__(self, destinatario: discord.Member):
+        super().__init__()
+        self.destinatario = destinatario
 
-    def __init__(self, target_user: discord.User):
-        super().__init__(timeout=None)
-        self.target_user = target_user
-
-        # Input campi
-        self.destinatario = discord.ui.TextInput(
-            label="Destinatario",
-            placeholder="es. mario.rossi@pec.it",
-            style=discord.TextStyle.short,
-            required=True
-        )
-        self.oggetto = discord.ui.TextInput(
-            label="Oggetto",
-            placeholder="Oggetto della PEC",
-            style=discord.TextStyle.short,
-            required=True
-        )
-        self.corpo = discord.ui.TextInput(
-            label="Messaggio",
-            placeholder="Scrivi il corpo della PEC...",
-            style=discord.TextStyle.paragraph,
-            required=True,
-            max_length=2000
-        )
-
-        # Aggiungi i componenti al form
-        self.add_item(self.destinatario)
-        self.add_item(self.oggetto)
-        self.add_item(self.corpo)
-
-    async def on_submit(self, interaction: discord.Interaction):
+    async def on_submit(self, interaction: Interaction):
         embed = discord.Embed(
-            title="📬 Nuova PEC ricevuta",
-            description=f"**Destinatario PEC:** {self.destinatario.value}\n"
-                        f"**Oggetto:** {self.oggetto.value}\n\n"
-                        f"{self.corpo.value}",
+            title="📩 Comunicazione Ufficiale",
+            description=f"**Oggetto:** {self.oggetto.value}",
             color=discord.Color.dark_blue()
         )
-        embed.set_footer(text="Sistema PEC - Bot Discord")
+        embed.add_field(name="📜 Contenuto", value=self.contenuto.value, inline=False)
+        embed.set_footer(text=self.firma.value.strip() or "Sistema Penitenziario", icon_url=interaction.guild.icon.url)
+        embed.timestamp = interaction.created_at
 
         try:
-            await self.target_user.send(embed=embed)
-            await interaction.response.send_message("✅ PEC inviata con successo via DM!", ephemeral=True)
-        except discord.Forbidden:
-            await interaction.response.send_message("❌ Impossibile inviare la PEC: utente con DM bloccati.", ephemeral=True)
+            await self.destinatario.send(embed=embed)
+            await interaction.response.send_message("✅ PEC inviata in DM.", ephemeral=True)
+        except:
+            await interaction.response.send_message("❌ DM bloccati per l'utente.", ephemeral=True)
 
-# 🔹 Comando /pec da aggiungere
-@app_commands.command(name="pec", description="Invia una PEC elegante via DM a un utente")
-@app_commands.describe(utente="Utente destinatario della PEC")
-async def pec(interaction: discord.Interaction, utente: discord.User):
-    if utente.bot:
-        await interaction.response.send_message("❌ Non puoi inviare una PEC a un bot.", ephemeral=True)
+@bot.tree.command(name="pec", description="Invia una comunicazione ufficiale (PEC).")
+@app_commands.describe(destinatario="Utente destinatario")
+async def pec(interaction: Interaction, destinatario: discord.Member):
+    if not any(r.id in RUOLI_AUTORIZZATI for r in interaction.user.roles):
+        await interaction.response.send_message("❌ Non hai i permessi.", ephemeral=True)
         return
+    await interaction.response.send_modal(PecForm(destinatario))
 
-    modal = PECForm(target_user=utente)
-    await interaction.response.send_modal(modal)
 
 # 🚀 Avvio
 if __name__ == "__main__":
