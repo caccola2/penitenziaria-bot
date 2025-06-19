@@ -437,15 +437,17 @@ async def destituzione_operatore(interaction: Interaction, utente: discord.Membe
         return
     await interaction.response.send_modal(DestituzioneForm(utente=utente))
 
-class PecForm(ui.Modal, title="📬 Invio Comunicazione PEC"):
+
+# ✅ /pec
+class PecForm(ui.Modal, title="Invio Comunicazione PEC"):
     oggetto = ui.TextInput(
-        label="Oggetto del provvedimento",
+        label="⟨ Oggetto del provvedimento",
         style=TextStyle.short,
         placeholder="Es: Notifica provvedimento disciplinare",
         required=True
     )
     contenuto = ui.TextInput(
-        label="Contenuto del messaggio",
+        label="✒️ Contenuto del messaggio",
         style=TextStyle.paragraph,
         placeholder="Testo completo della comunicazione",
         required=True
@@ -463,31 +465,35 @@ class PecForm(ui.Modal, title="📬 Invio Comunicazione PEC"):
 
     async def on_submit(self, interaction: Interaction):
         embed = discord.Embed(
-            title="Notifica provvedimento",
+            title="Notifica Provvedimento",
             description=(
                 "**Corpo di Polizia Penitenziaria**\n\n"
                 f"{self.contenuto.value.strip()}\n\n"
-                f"__\n*{self.firma.value.strip()}*"
+                f"—\n*{self.firma.value.strip()}*"
             ),
             color=discord.Color.dark_blue()
         )
-        embed.set_footer(text="Sistema di Comunicazioni Dirette – Polizia Penitenziaria")
+        embed.set_footer(
+            text="Sistema di Comunicazioni Dirette – Polizia Penitenziaria",
+            icon_url=interaction.client.user.avatar.url  # Logo del bot
+        )
 
         try:
             await self.destinatario.send(embed=embed)
-            await interaction.response.send_message("✅ PEC inviata correttamente via DM.", ephemeral=True)
+            await interaction.response.send_message("PEC inviata correttamente via DM.", ephemeral=True)
         except discord.Forbidden:
-            await interaction.response.send_message("❌ L'utente ha i DM disattivati.", ephemeral=True)
+            await interaction.response.send_message("L'utente ha i DM disattivati.", ephemeral=True)
 
 @bot.tree.command(name="pec", description="Invia una comunicazione ufficiale in DM.")
 @app_commands.describe(destinatario="Utente destinatario della PEC")
 async def pec(interaction: Interaction, destinatario: discord.Member):
     RUOLI_AUTORIZZATI = [819251679081791498, 896679736418381855, 815496510653333524]
     if not any(r.id in RUOLI_AUTORIZZATI for r in interaction.user.roles):
-        await interaction.response.send_message("❌ Non hai i permessi per usare questo comando.", ephemeral=True)
+        await interaction.response.send_message("Non hai i permessi per usare questo comando.", ephemeral=True)
         return
 
     await interaction.response.send_modal(PecForm(destinatario))
+
 
 
 # 🚀 Avvio
