@@ -497,7 +497,6 @@ async def pec(interaction: Interaction, destinatario: discord.Member):
 
 # ✅ Reintegro
 class ReintegroForm(ui.Modal, title="Form Reintegro Operatore"):
-    qualifica_operatore = ui.TextInput(label="Qualifica Operatore", style=TextStyle.short)
     reparto_assegnazione = ui.TextInput(label="Reparto di Assegnazione", style=TextStyle.short)
 
     def __init__(self, utente: discord.Member):
@@ -506,11 +505,10 @@ class ReintegroForm(ui.Modal, title="Form Reintegro Operatore"):
 
     async def on_submit(self, interaction: Interaction):
         canale = interaction.client.get_channel(791774585007767593)
-        emoji_qualifica = trova_emoji(self.qualifica_operatore.value, interaction.guild.emojis)
         reparto = self.reparto_assegnazione.value.strip()
 
         messaggio = (
-            f"> L'**{self.qualifica_operatore.value}** {emoji_qualifica} {self.utente.mention} "
+            f"> L'**Agente** <:AgentePP:899769709333979197> {self.utente.mention} "
             f"conclude il corso d'aggiornamento presso la Direzione delle Scuole. "
             f"Esso viene assegnato al **{reparto}**, presso la Casa Circondariale \"G. Salvia\".\n\n"
             f"*Il suddetto {self.qualifica_operatore.value} dovrà affrontare un primo periodo di prova, "
@@ -519,7 +517,7 @@ class ReintegroForm(ui.Modal, title="Form Reintegro Operatore"):
 
         try:
             embed_dm = discord.Embed(
-                title="Reintegro Ricevuto",
+                title="Reintegro Accettato",
                 description=(
                     f"L'**{self.qualifica_operatore.value}** {emoji_qualifica}, hai concluso il corso d'aggiornamento e sei assegnato al reparto {reparto}."
                 ),
