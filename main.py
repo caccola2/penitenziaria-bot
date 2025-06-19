@@ -441,31 +441,35 @@ async def destituzione_operatore(interaction: Interaction, utente: discord.Membe
 # ✅ Modale per la creazione della PEC
 class PECForm(discord.ui.Modal, title="✉️ Componi la tua PEC"):
 
-    destinatario = discord.ui.TextInput(
-        label="Destinatario",
-        placeholder="es. mario.rossi@pec.it",
-        required=True,
-        style=discord.TextStyle.short
-    )
-
-    oggetto = discord.ui.TextInput(
-        label="Oggetto",
-        placeholder="Oggetto della PEC",
-        required=True,
-        style=discord.TextStyle.short
-    )
-
-    corpo = discord.ui.TextInput(
-        label="Messaggio",
-        placeholder="Scrivi il corpo della PEC...",
-        required=True,
-        style=discord.TextStyle.paragraph,
-        max_length=2000
-    )
-
     def __init__(self, target_user: discord.User):
-        super().__init__()
+        super().__init__(timeout=None)
         self.target_user = target_user
+
+        # Input campi
+        self.destinatario = discord.ui.TextInput(
+            label="Destinatario",
+            placeholder="es. mario.rossi@pec.it",
+            style=discord.TextStyle.short,
+            required=True
+        )
+        self.oggetto = discord.ui.TextInput(
+            label="Oggetto",
+            placeholder="Oggetto della PEC",
+            style=discord.TextStyle.short,
+            required=True
+        )
+        self.corpo = discord.ui.TextInput(
+            label="Messaggio",
+            placeholder="Scrivi il corpo della PEC...",
+            style=discord.TextStyle.paragraph,
+            required=True,
+            max_length=2000
+        )
+
+        # Aggiungi i componenti al form
+        self.add_item(self.destinatario)
+        self.add_item(self.oggetto)
+        self.add_item(self.corpo)
 
     async def on_submit(self, interaction: discord.Interaction):
         embed = discord.Embed(
@@ -483,15 +487,16 @@ class PECForm(discord.ui.Modal, title="✉️ Componi la tua PEC"):
         except discord.Forbidden:
             await interaction.response.send_message("❌ Impossibile inviare la PEC: utente con DM bloccati.", ephemeral=True)
 
-# Comando da aggiungere
+# 🔹 Comando /pec da aggiungere
 @app_commands.command(name="pec", description="Invia una PEC elegante via DM a un utente")
 @app_commands.describe(utente="Utente destinatario della PEC")
 async def pec(interaction: discord.Interaction, utente: discord.User):
-    try:
-        await interaction.response.send_modal(PECForm(target_user=utente))
-    except discord.Forbidden:
-        await interaction.response.send_message("❌ Non posso aprire il form. Controlla i permessi.", ephemeral=True)
+    if utente.bot:
+        await interaction.response.send_message("❌ Non puoi inviare una PEC a un bot.", ephemeral=True)
+        return
 
+    modal = PECForm(target_user=utente)
+    await interaction.response.send_modal(modal)
 
 # 🚀 Avvio
 if __name__ == "__main__":
