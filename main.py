@@ -466,7 +466,8 @@ class PecForm(ui.Modal, title="📬 Invio Comunicazione PEC"):
 @bot.tree.command(name="pec", description="Invia una comunicazione ufficiale (PEC).")
 @app_commands.describe(destinatario="Utente destinatario")
 async def pec(interaction: Interaction, destinatario: discord.Member):
-    if not any(r.id in RUOLI_AUTORIZZATI for r in interaction.user.roles):
+    autorizzati = [819251679081791498, 896679736418381855, 815496510653333524]
+    if not any(r.id in autorizzati for r in interaction.user.roles):
         await interaction.response.send_message("❌ Non hai i permessi.", ephemeral=True)
         return
     await interaction.response.send_modal(PecForm(destinatario))
