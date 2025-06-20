@@ -545,6 +545,38 @@ async def reintegro_operatore(interaction: Interaction, utente: discord.Member):
     await interaction.response.send_modal(ReintegroForm(utente=utente))
 
 
+# ✅ /rank
+@tree.command(name="rank", description="Ranka un utente nel gruppo Roblox")
+@app_commands.describe(username="Username Roblox", rank_id="ID del rango da assegnare")
+async def rank_command(interaction: discord.Interaction, username: str, rank_id: int):
+    await interaction.response.defer()
+    payload = {
+        "username": username,
+        "rankId": rank_id
+    }
+
+    try:
+        response = requests.post(RENDER_URL, json=payload)
+        data = response.json()
+
+        if data.get("success"):
+            await interaction.followup.send(f"✅ {username} è stato rankato al rango `{rank_id}`.")
+        else:
+            await interaction.followup.send(f"❌ Errore: {data.get('message')}")
+    except Exception as e:
+        await interaction.followup.send(f"⚠️ Errore durante la richiesta: {e}")
+
+@bot.event
+async def on_ready():
+    print(f"✅ Bot connesso come {bot.user}")
+    try:
+        synced = await tree.sync()
+        print(f"🔁 Slash command sincronizzati: {len(synced)}")
+    except Exception as e:
+        print(f"❌ Errore nella sync dei comandi: {e}")
+
+
+
 
 # 🚀 Avvio
 if __name__ == "__main__":
