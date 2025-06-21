@@ -544,6 +544,35 @@ async def reintegro_operatore(interaction: Interaction, utente: discord.Member):
         return
     await interaction.response.send_modal(ReintegroForm(utente=utente))
 
+# AUGURI PUMI TEMPORANEO
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName('auguri-pumi')
+    .setDescription('Manda 20 messaggi di auguri per Puminegro ❤️')
+    .setDefaultMemberPermissions(PermissionFlagsBits.SendMessages),
+
+  async execute(interaction) {
+    const requiredRoleId = '791772896736313371';
+    const userIdToMention = '843162422743269408';
+
+    // Controllo ruolo
+    if (!interaction.member.roles.cache.has(requiredRoleId)) {
+      return interaction.reply({
+        content: 'Non hai il permesso per usare questo comando.',
+        ephemeral: true,
+      });
+    }
+
+    // Invia i 20 messaggi nel canale
+    for (let i = 0; i < 20; i++) {
+      await interaction.channel.send(`AUGURI PUMINEGRO ❤️ <@${userIdToMention}>`);
+    }
+
+    // Risposta iniziale (opzionale)
+    await interaction.reply({ content: 'Auguri inviati con successo! 🎉', ephemeral: true });
+  },
+};
+
 
 # 🚀 Avvio
 if __name__ == "__main__":
