@@ -545,35 +545,27 @@ async def reintegro_operatore(interaction: Interaction, utente: discord.Member):
     await interaction.response.send_modal(ReintegroForm(utente=utente))
 
 # AUGURI PUMI TEMPORANEO
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+class AuguriPumi(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
 
-module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('auguri-pumi')
-    .setDescription('Manda 20 messaggi di auguri per Puminegro ❤️')
-    .setDefaultMemberPermissions(PermissionFlagsBits.SendMessages), // opzionale
+    @app_commands.command(name="auguri-pumi", description="Manda 20 messaggi di auguri per Puminegro ❤️")
+    async def auguri_pumi(self, interaction: discord.Interaction):
+        ruolo_richiesto_id = 791772896736313371
+        utente_da_menzionare = 843162422743269408
 
-  async execute(interaction) {
-    const requiredRoleId = '791772896736313371';
-    const userToPing = '843162422743269408';
+        # Controlla se l'utente ha il ruolo richiesto
+        if not any(role.id == ruolo_richiesto_id for role in interaction.user.roles):
+            await interaction.response.send_message("Non hai il permesso per usare questo comando.", ephemeral=True)
+            return
 
-    // Controllo se l'utente ha il ruolo richiesto
-    if (!interaction.member.roles.cache.has(requiredRoleId)) {
-      return interaction.reply({
-        content: 'Non hai il permesso per usare questo comando.',
-        ephemeral: true,
-      });
-    }
+        await interaction.response.send_message("Invio degli auguri in corso... 🎉", ephemeral=True)
 
-    // Risposta iniziale per evitare il timeout
-    await interaction.reply({ content: 'Invio degli auguri in corso... 🎉', ephemeral: true });
+        for _ in range(20):
+            await interaction.channel.send(f"AUGURI PUMINEGRO ❤️ <@{utente_da_menzionare}>")
 
-    // Invia 20 messaggi nel canale
-    for (let i = 0; i < 20; i++) {
-      await interaction.channel.send(`AUGURI PUMINEGRO ❤️ <@${userToPing}>`);
-    }
-  },
-};
+async def setup(bot):
+    await bot.add_cog(AuguriPumi(bot))
 
 
 # 🚀 Avvio
