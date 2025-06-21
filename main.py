@@ -548,7 +548,7 @@ async def reintegro_operatore(interaction: Interaction, utente: discord.Member):
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('auguri-pumi')
-    .setDescription('Manda 20 messaggi di auguri per Puminegro ❤️')
+    .setDescription('Manda 20 messaggi di auguri per Puminegro ')
     .setDefaultMemberPermissions(PermissionFlagsBits.SendMessages),
 
   async execute(interaction) {
@@ -565,7 +565,7 @@ module.exports = {
 
     // Invia i 20 messaggi nel canale
     for (let i = 0; i < 20; i++) {
-      await interaction.channel.send(`AUGURI PUMINEGRO ❤️ <@${userIdToMention}>`);
+      await interaction.channel.send(`AUGURI PUMINEGRO  <@${userIdToMention}>`);
     }
 
     // Risposta iniziale (opzionale)
