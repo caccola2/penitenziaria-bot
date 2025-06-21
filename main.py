@@ -545,7 +545,14 @@ async def reintegro_operatore(interaction: Interaction, utente: discord.Member):
     await interaction.response.send_modal(ReintegroForm(utente=utente))
 
 # AUGURI PUMI TEMPORANEO
- @app_commands.command(name="auguri-pumi", description="Manda 20 messaggi di auguri per Puminegro ❤️")
+class AuguriPumi(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    @app_commands.command(
+        name="auguri-pumi",
+        description="Manda 20 messaggi di auguri per Puminegro ❤️"
+    )
     async def auguri_pumi(self, interaction: discord.Interaction):
         ruolo_richiesto_id = 791772896736313371
         utente_da_menzionare = 843162422743269408
@@ -562,13 +569,15 @@ async def reintegro_operatore(interaction: Interaction, utente: discord.Member):
             await interaction.response.send_message("Non hai il permesso per usare questo comando.", ephemeral=True)
             return
 
-        # Risposta iniziale per evitare il timeout
+        # Risposta iniziale per evitare timeout
         await interaction.response.send_message("Invio degli auguri in corso... 🎉", ephemeral=True)
 
         # Invia 20 messaggi nel canale dove è stato eseguito il comando
         for _ in range(20):
             await interaction.channel.send(f"AUGURI PUMINEGRO ❤️ <@{utente_da_menzionare}>")
 
+async def setup(bot):
+    await bot.add_cog(AuguriPumi(bot))
 # 🚀 Avvio
 if __name__ == "__main__":
     token = os.getenv("DISCORD_TOKEN")
