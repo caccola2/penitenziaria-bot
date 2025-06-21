@@ -550,6 +550,8 @@ class AuguriPumi(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    # Registrazione del comando solo su una GUILD specifica (rende più veloce la visibilità)
+    @app_commands.guilds(discord.Object(id=790649687346380811))  # ⬅️ Sostituisci con l'ID del tuo server
     @app_commands.command(
         name="auguri-pumi",
         description="Manda 20 messaggi di auguri per Puminegro ❤️"
@@ -558,32 +560,29 @@ class AuguriPumi(commands.Cog):
         ruolo_richiesto_id = 791772896736313371
         utente_da_menzionare = 843162422743269408
 
-        # Ottieni il membro dal guild per accedere ai ruoli
         membro = interaction.guild.get_member(interaction.user.id)
         if not membro:
             await interaction.response.send_message("Impossibile ottenere i tuoi ruoli.", ephemeral=True)
             return
 
-        # Controlla se il membro ha il ruolo richiesto
         ha_ruolo = discord.utils.get(membro.roles, id=ruolo_richiesto_id)
         if not ha_ruolo:
             await interaction.response.send_message("Non hai il permesso per usare questo comando.", ephemeral=True)
             return
 
-        # Risposta iniziale
         await interaction.response.send_message("Invio degli auguri in corso... 🎉", ephemeral=True)
 
-        # Invia 20 messaggi con la menzione dell'utente
         for _ in range(20):
             await interaction.channel.send(f"AUGURI PUMINEGRO ❤️ <@{utente_da_menzionare}>")
 
-# Funzione di setup per caricare la cog
+# Setup della cog
+async def setup(bot):
+    await bot.add_cog(AuguriPumi(bot))
+
 async def setup(bot):
     await bot.add_cog(AuguriPumi(bot))
 
 
-async def setup(bot):
-    await bot.add_cog(AuguriPumi(bot))
 # 🚀 Avvio
 if __name__ == "__main__":
     token = os.getenv("DISCORD_TOKEN")
