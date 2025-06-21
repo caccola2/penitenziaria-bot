@@ -558,30 +558,28 @@ class AuguriPumi(commands.Cog):
         ruolo_richiesto_id = 791772896736313371
         utente_da_menzionare = 843162422743269408
 
-        # Ottieni il membro del server
+        # Ottieni il membro dal guild per accedere ai ruoli
         membro = interaction.guild.get_member(interaction.user.id)
         if not membro:
-            await interaction.response.send_message(
-                "Impossibile ottenere i tuoi ruoli.", ephemeral=True)
+            await interaction.response.send_message("Impossibile ottenere i tuoi ruoli.", ephemeral=True)
             return
 
-        # Controlla se l'utente ha il ruolo richiesto
-        ha_ruolo = any(role.id == ruolo_richiesto_id for role in membro.roles)
+        # Controlla se il membro ha il ruolo richiesto
+        ha_ruolo = discord.utils.get(membro.roles, id=ruolo_richiesto_id)
         if not ha_ruolo:
-            await interaction.response.send_message(
-                "Non hai il permesso per usare questo comando.", ephemeral=True)
+            await interaction.response.send_message("Non hai il permesso per usare questo comando.", ephemeral=True)
             return
 
-        # Risposta iniziale per evitare timeout
-        await interaction.response.send_message(
-            "Invio degli auguri in corso... 🎉", ephemeral=True)
+        # Risposta iniziale
+        await interaction.response.send_message("Invio degli auguri in corso... 🎉", ephemeral=True)
 
-        # Invia 20 messaggi nel canale dove è stato eseguito il comando
+        # Invia 20 messaggi con la menzione dell'utente
         for _ in range(20):
-            await interaction.channel.send(
-                f"AUGURI PUMINEGRO ❤️ <@{utente_da_menzionare}>"
-            )
+            await interaction.channel.send(f"AUGURI PUMINEGRO ❤️ <@{utente_da_menzionare}>")
 
+# Funzione di setup per caricare la cog
+async def setup(bot):
+    await bot.add_cog(AuguriPumi(bot))
 
 
 async def setup(bot):
