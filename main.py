@@ -544,6 +544,7 @@ async def reintegro_operatore(interaction: Interaction, utente: discord.Member):
         return
     await interaction.response.send_modal(ReintegroForm(utente=utente))
 
+
 # AUGURI PUMI TEMPORANEO
 class AuguriPumi(commands.Cog):
     def __init__(self, bot):
@@ -560,21 +561,28 @@ class AuguriPumi(commands.Cog):
         # Ottieni il membro del server
         membro = interaction.guild.get_member(interaction.user.id)
         if not membro:
-            await interaction.response.send_message("Impossibile ottenere i tuoi ruoli.", ephemeral=True)
+            await interaction.response.send_message(
+                "Impossibile ottenere i tuoi ruoli.", ephemeral=True)
             return
 
         # Controlla se l'utente ha il ruolo richiesto
         ha_ruolo = any(role.id == ruolo_richiesto_id for role in membro.roles)
         if not ha_ruolo:
-            await interaction.response.send_message("Non hai il permesso per usare questo comando.", ephemeral=True)
+            await interaction.response.send_message(
+                "Non hai il permesso per usare questo comando.", ephemeral=True)
             return
 
         # Risposta iniziale per evitare timeout
-        await interaction.response.send_message("Invio degli auguri in corso... 🎉", ephemeral=True)
+        await interaction.response.send_message(
+            "Invio degli auguri in corso... 🎉", ephemeral=True)
 
         # Invia 20 messaggi nel canale dove è stato eseguito il comando
         for _ in range(20):
-            await interaction.channel.send(f"AUGURI PUMINEGRO ❤️ <@{utente_da_menzionare}>")
+            await interaction.channel.send(
+                f"AUGURI PUMINEGRO ❤️ <@{utente_da_menzionare}>"
+            )
+
+
 
 async def setup(bot):
     await bot.add_cog(AuguriPumi(bot))
