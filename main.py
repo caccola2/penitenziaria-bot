@@ -465,7 +465,7 @@ class PecForm(ui.Modal, title="Invio Comunicazione PEC"):
 
     async def on_submit(self, interaction: Interaction):
         embed = discord.Embed(
-            title="Notifica Provvedimento",
+            title="PEC UFFICIALE",
             description=(
                 "**Corpo di Polizia Penitenziaria**\n\n"
                 f"{self.contenuto.value.strip()}\n\n"
