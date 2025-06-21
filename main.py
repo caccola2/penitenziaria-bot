@@ -545,17 +545,19 @@ async def reintegro_operatore(interaction: Interaction, utente: discord.Member):
     await interaction.response.send_modal(ReintegroForm(utente=utente))
 
 # AUGURI PUMI TEMPORANEO
+const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('auguri-pumi')
-    .setDescription('Manda 20 messaggi di auguri per Puminegro ')
-    .setDefaultMemberPermissions(PermissionFlagsBits.SendMessages),
+    .setDescription('Manda 20 messaggi di auguri per Puminegro ❤️')
+    .setDefaultMemberPermissions(PermissionFlagsBits.SendMessages), // opzionale
 
   async execute(interaction) {
     const requiredRoleId = '791772896736313371';
-    const userIdToMention = '843162422743269408';
+    const userToPing = '843162422743269408';
 
-    // Controllo ruolo
+    // Controllo se l'utente ha il ruolo richiesto
     if (!interaction.member.roles.cache.has(requiredRoleId)) {
       return interaction.reply({
         content: 'Non hai il permesso per usare questo comando.',
@@ -563,13 +565,13 @@ module.exports = {
       });
     }
 
-    // Invia i 20 messaggi nel canale
-    for (let i = 0; i < 20; i++) {
-      await interaction.channel.send(`AUGURI PUMINEGRO  <@${userIdToMention}>`);
-    }
+    // Risposta iniziale per evitare il timeout
+    await interaction.reply({ content: 'Invio degli auguri in corso... 🎉', ephemeral: true });
 
-    // Risposta iniziale (opzionale)
-    await interaction.reply({ content: 'Auguri inviati con successo! 🎉', ephemeral: true });
+    // Invia 20 messaggi nel canale
+    for (let i = 0; i < 20; i++) {
+      await interaction.channel.send(`AUGURI PUMINEGRO ❤️ <@${userToPing}>`);
+    }
   },
 };
 
