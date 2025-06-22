@@ -546,51 +546,68 @@ async def reintegro_operatore(interaction: Interaction, utente: discord.Member):
 
 
 # ✅ ANNUNCI GOM
-class GOMAnnuncioModal(discord.ui.Modal, title="Crea Annuncio GOM"):
-    def __init__(self, bot):
+RUOLI_AUTORIZZATI = [823977586308022294, 928416557141458985]
+
+class GOMAnnuncioForm(ui.Modal, title="Annuncio GOM"):
+    titolo = ui.TextInput(
+        label="📌 Titolo dell'annuncio",
+        style=TextStyle.short,
+        placeholder="Es: Operazione Alpha",
+        required=True
+    )
+    contenuto = ui.TextInput(
+        label="✒️ Testo dell'annuncio",
+        style=TextStyle.paragraph,
+        placeholder="Scrivi il messaggio completo da inviare nel canale.",
+        required=True
+    )
+    firma = ui.TextInput(
+        label="✍️ Firma (es. Grado e Nome)",
+        style=TextStyle.short,
+        placeholder="Es: Ispettore Capo - Mario Rossi",
+        required=True
+    )
+
+    def __init__(self, interaction: Interaction):
         super().__init__()
-        self.bot = bot
+        self.interaction = interaction  # Canale da cui è stato eseguito il comando
 
-        self.titolo = discord.ui.TextInput(
-            label="Titolo dell'annuncio",
-            placeholder="Es. Operazione in corso",
-            max_length=100
-        )
-        self.add_item(self.titolo)
-
-        self.messaggio = discord.ui.TextInput(
-            label="Contenuto dell'annuncio",
-            style=discord.TextStyle.paragraph,
-            placeholder="Scrivi qui i dettagli dell'annuncio...",
-            max_length=1000
-        )
-        self.add_item(self.messaggio)
-
-        self.tipo = discord.ui.TextInput(
-            label="Tipo (standard / urgente)",
-            placeholder="standard o urgente",
-            max_length=20
-        )
-        self.add_item(self.tipo)
-
-    async def on_submit(self, interaction: discord.Interaction):
+    async def on_submit(self, interaction: Interaction):
         embed = discord.Embed(
-            title=self.titolo.value,
-            description=self.messaggio.value,
-            color=discord.Color.red() if self.tipo.value.lower() == "urgente" else discord.Color.blue()
+            title=f"📣 {self.titolo.value.strip()}",
+            description=self.contenuto.value.strip(),
+            color=discord.Color.orange()
         )
-        embed.set_footer(text=f"Annuncio GOM pubblicato da {interaction.user.display_name}")
-        await interaction.response.send_message("✅ Annuncio inviato!", ephemeral=True)
-        await interaction.channel.send(embed=embed)
+        embed.set_footer(
+            text=f"{self.firma.value.strip()} – Gruppo Operativo Mobile",
+            icon_url=interaction.client.user.avatar.url
+        )
 
+        await interaction.response.send_message("✅ Annuncio pubblicato nel canale!", ephemeral=True)
+        await self.interaction.channel.send(embed=embed)
+
+
+# Slash command
+@app_commands.command(name="gom-annuncio", description="Crea un annuncio ufficiale GOM nel canale attuale.")
+async def gom_annuncio(interaction: Interaction):
+    if not any(r.id in RUOLI_AUTORIZZATI for r in interaction.user.roles):
+        await interaction.response.send_message("🚫 Non hai i permessi per usare questo comando.", ephemeral=True)
+        return
+
+    await interaction.response.send_modal(GOMAnnuncioForm(interaction))
+
+
+# Cog opzionale
 class GOMAnnuncio(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.bot.tree.add_command(gom_annuncio)
 
-    @app_commands.command(name="gom-annuncio", description="Crea un annuncio per il Gruppo Operativo Mobile")
-    async def gom_annuncio(self, interaction: discord.Interaction):
-        await interaction.response.send_modal(GOMAnnuncioModal(self.bot))
+    async def cog_unload(self):
+        self.bot.tree.remove_command(gom_annuncio.name)
 
+
+# Setup per cogs
 async def setup(bot):
     await bot.add_cog(GOMAnnuncio(bot))
 
