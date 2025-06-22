@@ -102,11 +102,6 @@ async def attivita(interaction: discord.Interaction, attivita: str, luogo: str, 
     await channel.send("||<@&791772896736313371>||")
     await interaction.response.send_message("Attività inviata!", ephemeral=True)
 
-# ✅ Comando: check
-@bot.tree.command(name="check", description="Verifica se il bot è online.")
-async def check(interaction: discord.Interaction):
-    print(f"[DEBUG] /check chiamato da {interaction.user}")
-    await interaction.response.send_message("Il bot funziona porcodio 🐷⚡", ephemeral=True)
 
 # ✅ Modal: promozione
 class PromozioneForm(ui.Modal, title="📈 Form Promozione Operatore"):
