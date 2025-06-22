@@ -545,43 +545,55 @@ async def reintegro_operatore(interaction: Interaction, utente: discord.Member):
     await interaction.response.send_modal(ReintegroForm(utente=utente))
 
 
-# AUGURI PUMI TEMPORANEO
-class AuguriPumi(commands.Cog):
+# ✅ ANNUNCI GOM
+lass GOMAnnuncioModal(discord.ui.Modal, title="Crea Annuncio GOM"):
+    def __init__(self, bot):
+        super().__init__()
+        self.bot = bot
+
+        self.titolo = discord.ui.TextInput(
+            label="Titolo dell'annuncio",
+            placeholder="Es. Operazione in corso",
+            max_length=100
+        )
+        self.add_item(self.titolo)
+
+        self.messaggio = discord.ui.TextInput(
+            label="Contenuto dell'annuncio",
+            style=discord.TextStyle.paragraph,
+            placeholder="Scrivi qui i dettagli dell'annuncio...",
+            max_length=1000
+        )
+        self.add_item(self.messaggio)
+
+        self.tipo = discord.ui.TextInput(
+            label="Tipo (standard / urgente)",
+            placeholder="standard o urgente",
+            max_length=20
+        )
+        self.add_item(self.tipo)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        embed = discord.Embed(
+            title=self.titolo.value,
+            description=self.messaggio.value,
+            color=discord.Color.red() if self.tipo.value.lower() == "urgente" else discord.Color.blue()
+        )
+        embed.set_footer(text=f"Annuncio GOM pubblicato da {interaction.user.display_name}")
+        await interaction.response.send_message("✅ Annuncio inviato!", ephemeral=True)
+        await interaction.channel.send(embed=embed)
+
+class GOMAnnuncio(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    # Registrazione del comando solo su una GUILD specifica (rende più veloce la visibilità)
-    @app_commands.guilds(discord.Object(id=790649687346380811))  # ⬅️ Sostituisci con l'ID del tuo server
-    @app_commands.command(
-        name="auguri-pumi",
-        description="Manda 20 messaggi di auguri per Puminegro ❤️"
-    )
-    async def auguri_pumi(self, interaction: discord.Interaction):
-        ruolo_richiesto_id = 791772896736313371
-        utente_da_menzionare = 843162422743269408
-
-        membro = interaction.guild.get_member(interaction.user.id)
-        if not membro:
-            await interaction.response.send_message("Impossibile ottenere i tuoi ruoli.", ephemeral=True)
-            return
-
-        ha_ruolo = discord.utils.get(membro.roles, id=ruolo_richiesto_id)
-        if not ha_ruolo:
-            await interaction.response.send_message("Non hai il permesso per usare questo comando.", ephemeral=True)
-            return
-
-        await interaction.response.send_message("Invio degli auguri in corso... 🎉", ephemeral=True)
-
-        for _ in range(20):
-            await interaction.channel.send(f"AUGURI PUMINEGRO ❤️ <@{utente_da_menzionare}>")
+    @app_commands.command(name="gom-annuncio", description="Crea un annuncio per il Gruppo Operativo Mobile")
+    async def gom_annuncio(self, interaction: discord.Interaction):
+        await interaction.response.send_modal(GOMAnnuncioModal(self.bot))
 
 # Setup della cog
 async def setup(bot):
-    await bot.add_cog(AuguriPumi(bot))
-
-async def setup(bot):
-    await bot.add_cog(AuguriPumi(bot))
-
+    await bot.add_cog(GOMAnnuncio(bot))
 
 # 🚀 Avvio
 if __name__ == "__main__":
