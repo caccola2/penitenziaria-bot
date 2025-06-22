@@ -540,32 +540,17 @@ async def reintegro_operatore(interaction: Interaction, utente: discord.Member):
     await interaction.response.send_modal(ReintegroForm(utente=utente))
 
 
-# Ruoli autorizzati per usare il comando
+# ANNUNCI GOM
 RUOLI_AUTORIZZATI = [823977586308022294, 928416557141458985]
 
 class GOMAnnuncioForm(ui.Modal, title="Annuncio GOM"):
-    titolo = ui.TextInput(
-        label="📌 Titolo dell'annuncio",
-        style=TextStyle.short,
-        placeholder="Es: Operazione Alpha",
-        required=True
-    )
-    contenuto = ui.TextInput(
-        label="✒️ Testo dell'annuncio",
-        style=TextStyle.paragraph,
-        placeholder="Scrivi il messaggio completo da inviare nel canale.",
-        required=True
-    )
-    firma = ui.TextInput(
-        label="✍️ Firma (es. Grado e Nome)",
-        style=TextStyle.short,
-        placeholder="Es: Ispettore Capo - Mario Rossi",
-        required=True
-    )
+    titolo = ui.TextInput(label="📌 Titolo", style=TextStyle.short, required=True)
+    contenuto = ui.TextInput(label="✒️ Testo annuncio", style=TextStyle.paragraph, required=True)
+    firma = ui.TextInput(label="✍️ Firma", style=TextStyle.short, required=True)
 
     def __init__(self, interaction: Interaction):
         super().__init__()
-        self.interaction = interaction  # canale dove inviare l'annuncio
+        self.interaction = interaction
 
     async def on_submit(self, interaction: Interaction):
         embed = discord.Embed(
@@ -577,8 +562,7 @@ class GOMAnnuncioForm(ui.Modal, title="Annuncio GOM"):
             text=f"{self.firma.value.strip()} – Gruppo Operativo Mobile",
             icon_url=interaction.client.user.avatar.url
         )
-        # invio conferma all'autore e poi embed in canale
-        await interaction.response.send_message("✅ Annuncio pubblicato nel canale!", ephemeral=True)
+        await interaction.response.send_message("✅ Annuncio pubblicato.", ephemeral=True)
         await self.interaction.channel.send(embed=embed)
 
 class GOMAnnuncio(commands.Cog):
@@ -587,13 +571,14 @@ class GOMAnnuncio(commands.Cog):
 
     @app_commands.command(name="gom-annuncio", description="Crea un annuncio ufficiale GOM nel canale attuale.")
     async def gom_annuncio(self, interaction: Interaction):
-        if not any(r.id in RUOLI_AUTORIZZATI for r in interaction.user.roles):
-            await interaction.response.send_message("🚫 Non hai i permessi per usare questo comando.", ephemeral=True)
+        if not any(role.id in RUOLI_AUTORIZZATI for role in interaction.user.roles):
+            await interaction.response.send_message("🚫 Permessi insufficienti.", ephemeral=True)
             return
         await interaction.response.send_modal(GOMAnnuncioForm(interaction))
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(GOMAnnuncio(bot))
+
 
 # 🚀 Avvio
 if __name__ == "__main__":
