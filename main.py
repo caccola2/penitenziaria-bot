@@ -545,7 +545,6 @@ async def reintegro_operatore(interaction: Interaction, utente: discord.Member):
     await interaction.response.send_modal(ReintegroForm(utente=utente))
 
 
-# ✅ ANNUNCI GOM
 RUOLI_AUTORIZZATI = [823977586308022294, 928416557141458985]
 
 class GOMAnnuncioForm(ui.Modal, title="Annuncio GOM"):
@@ -570,7 +569,7 @@ class GOMAnnuncioForm(ui.Modal, title="Annuncio GOM"):
 
     def __init__(self, interaction: Interaction):
         super().__init__()
-        self.interaction = interaction  # Canale da cui è stato eseguito il comando
+        self.interaction = interaction  # Canale dove inviare il messaggio
 
     async def on_submit(self, interaction: Interaction):
         embed = discord.Embed(
@@ -586,16 +585,27 @@ class GOMAnnuncioForm(ui.Modal, title="Annuncio GOM"):
         await interaction.response.send_message("✅ Annuncio pubblicato nel canale!", ephemeral=True)
         await self.interaction.channel.send(embed=embed)
 
+class GOMAnnuncio(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
 
-# Slash command
-@app_commands.command(name="gom-annuncio", description="Crea un annuncio ufficiale GOM nel canale attuale.")
-async def gom_annuncio(interaction: Interaction):
-    if not any(r.id in RUOLI_AUTORIZZATI for r in interaction.user.roles):
-        await interaction.response.send_message("🚫 Non hai i permessi per usare questo comando.", ephemeral=True)
-        return
+    @app_commands.command(name="gom-annuncio", description="Crea un annuncio ufficiale GOM nel canale attuale.")
+    async def gom_annuncio(self, interaction: Interaction):
+        if not any(r.id in RUOLI_AUTORIZZATI for r in interaction.user.roles):
+            await interaction.response.send_message("🚫 Non hai i permessi per usare questo comando.", ephemeral=True)
+            return
 
-    await interaction.response.send_modal(GOMAnnuncioForm(interaction))
+        await interaction.response.send_modal(GOMAnnuncioForm(interaction))
 
+    async def cog_load(self):
+        self.bot.tree.add_command(self.gom_annuncio)
+
+    async def cog_unload(self):
+        self.bot.tree.remove_command(self.gom_annuncio.name)
+
+# 👇 Setup della cog (obbligatorio per renderla caricabile)
+async def setup(bot):
+    await bot.add_cog(GOMAnnuncio(bot))
 
 # Cog opzionale
 class GOMAnnuncio(commands.Cog):
