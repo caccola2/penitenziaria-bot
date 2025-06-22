@@ -546,7 +546,7 @@ async def reintegro_operatore(interaction: Interaction, utente: discord.Member):
 
 
 # ✅ ANNUNCI GOM
-lass GOMAnnuncioModal(discord.ui.Modal, title="Crea Annuncio GOM"):
+class GOMAnnuncioModal(discord.ui.Modal, title="Crea Annuncio GOM"):
     def __init__(self, bot):
         super().__init__()
         self.bot = bot
@@ -591,9 +591,9 @@ class GOMAnnuncio(commands.Cog):
     async def gom_annuncio(self, interaction: discord.Interaction):
         await interaction.response.send_modal(GOMAnnuncioModal(self.bot))
 
-# Setup della cog
 async def setup(bot):
     await bot.add_cog(GOMAnnuncio(bot))
+
 
 # 🚀 Avvio
 if __name__ == "__main__":
