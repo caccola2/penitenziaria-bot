@@ -70,7 +70,7 @@ def trova_ruolo(nome, ruoli):
 async def attivita(interaction: discord.Interaction, attivita: str, luogo: str, data_orario: str):
     print(f"[DEBUG] /attivita chiamato da {interaction.user} con params: {attivita}, {luogo}, {data_orario}")
     user_roles = [r.id for r in interaction.user.roles]
-    if not any(r in user_roles for r in [819251679081791498, 815496510653333524]):
+    if not any(r in user_roles for r in [819251679081791498, 815496510653333524, 896679736418381855]):
         print("[DEBUG] Utente non autorizzato.")
         await interaction.response.send_message("Non hai i permessi.", ephemeral=True)
         return
