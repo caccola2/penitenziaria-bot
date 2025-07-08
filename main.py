@@ -576,7 +576,7 @@ async def gom_annuncio(interaction: Interaction):
         return
     await interaction.response.send_modal(GOMAnnuncioForm(interaction.channel))
 
-# ✅ PROMOZIONE E DEGRADO GRUPPO
+# ✅ PROMOZIONE GRUPPO
 
 class GroupManagement(commands.Cog):
     def __init__(self, bot):
@@ -634,7 +634,18 @@ class GroupManagement(commands.Cog):
         else:
             await interaction.followup.send("❌ Errore nella promozione. Verifica i permessi e il cookie.")
 
-  @app_commands.command(name="demote_group", description="Degrada un utente a un ruolo inferiore.")
+# ✅ DEGRADO GRUPPO
+
+class GroupManagement(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+        self.roblosecurity = os.getenv("ROBLOX_COOKIE")
+        self.headers = {
+            "Cookie": f".ROBLOSECURITY={self.roblosecurity}",
+            "Content-Type": "application/json"
+        }
+
+    @app_commands.command(name="demote_group", description="Degrada un utente a un ruolo inferiore.")
     @app_commands.describe(username="Username Roblox", group_id="ID del gruppo", role_name="Ruolo attuale")
     async def demote_group(self, interaction: discord.Interaction, username: str, group_id: int, role_name: str):
         await interaction.response.defer()
@@ -660,16 +671,6 @@ class GroupManagement(commands.Cog):
             await interaction.followup.send(f"🔻 {username} è stato degradato al ruolo **{new_role['name']}**.")
         else:
             await interaction.followup.send("❌ Errore nella degradazione.")
-
-from group_commands import GroupManagement 
-
-@bot.event
-async def on_ready():
-    await bot.tree.sync()
-    print(f"Logged in as {bot.user}")
-
-bot.add_cog(GroupManagement(bot))
-
 
 
 # 🚀 Avvio
