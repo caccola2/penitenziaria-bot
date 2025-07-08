@@ -634,6 +634,45 @@ class GroupManagement(commands.Cog):
         else:
             await interaction.followup.send("❌ Errore nella promozione. Verifica i permessi e il cookie.")
 
+ @app_commands.command(name="demote_group", description="Degrada un utente a un ruolo inferiore.")
+    @app_commands.describe(username="Username Roblox", group_id="ID del gruppo", role_name="Ruolo attuale")
+    async def demote_group(self, interaction: discord.Interaction, username: str, group_id: int, role_name: str):
+        await interaction.response.defer()
+        user_id = self.get_user_id(username)
+        if not user_id:
+            await interaction.followup.send("❌ Username non valido.")
+            return
+
+        roles = sorted(self.get_group_roles(group_id), key=lambda x: x["rank"])
+        current_role = next((r for r in roles if r["name"].lower() == role_name.lower()), None)
+        if not current_role:
+            await interaction.followup.send("❌ Ruolo attuale non trovato.")
+            return
+
+        current_index = roles.index(current_role)
+        if current_index == 0:
+            await interaction.followup.send("❌ Nessun ruolo inferiore disponibile.")
+            return
+
+        new_role = roles[current_index - 1]
+        success = self.set_user_role(group_id, user_id, new_role["id"])
+        if success:
+            await interaction.followup.send(f"🔻 {username} è stato degradato al ruolo **{new_role['name']}**.")
+        else:
+            await interaction.followup.send("❌ Errore nella degradazione.")
+
+from group_commands import GroupManagement 
+
+bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
+
+@bot.event
+async def on_ready():
+    await bot.tree.sync()
+    print(f"Logged in as {bot.user}")
+
+bot.add_cog(GroupManagement(bot))
+
+
 
 # 🚀 Avvio
 if __name__ == "__main__":
