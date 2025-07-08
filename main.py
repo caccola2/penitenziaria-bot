@@ -634,7 +634,7 @@ class GroupManagement(commands.Cog):
         else:
             await interaction.followup.send("❌ Errore nella promozione. Verifica i permessi e il cookie.")
 
- @app_commands.command(name="demote_group", description="Degrada un utente a un ruolo inferiore.")
+  @app_commands.command(name="demote_group", description="Degrada un utente a un ruolo inferiore.")
     @app_commands.describe(username="Username Roblox", group_id="ID del gruppo", role_name="Ruolo attuale")
     async def demote_group(self, interaction: discord.Interaction, username: str, group_id: int, role_name: str):
         await interaction.response.defer()
@@ -662,8 +662,6 @@ class GroupManagement(commands.Cog):
             await interaction.followup.send("❌ Errore nella degradazione.")
 
 from group_commands import GroupManagement 
-
-bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 
 @bot.event
 async def on_ready():
