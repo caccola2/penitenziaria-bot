@@ -576,6 +576,64 @@ async def gom_annuncio(interaction: Interaction):
         return
     await interaction.response.send_modal(GOMAnnuncioForm(interaction.channel))
 
+# ✅ PROMOZIONE E DEGRADO GRUPPO
+
+class GroupManagement(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+        self.roblosecurity = os.getenv("ROBLOX_COOKIE")
+        self.headers = {
+            "Cookie": f".ROBLOSECURITY={self.roblosecurity}",
+            "Content-Type": "application/json"
+        }
+
+    def get_user_id(self, username):
+        r = requests.get(f"https://api.roblox.com/users/get-by-username?username={username}")
+        data = r.json()
+        return data.get("Id")
+
+    def get_group_roles(self, group_id):
+        r = requests.get(f"https://groups.roblox.com/v1/groups/{group_id}/roles")
+        return r.json().get("roles", [])
+
+    def get_user_current_role(self, group_id, user_id):
+        r = requests.get(f"https://groups.roblox.com/v1/users/{user_id}/groups/roles")
+        roles = r.json().get("data", [])
+        for r in roles:
+            if r["group"]["id"] == group_id:
+                return r["role"]
+        return None
+
+    def set_user_role(self, group_id, user_id, role_id):
+        r = requests.patch(
+            f"https://groups.roblox.com/v1/groups/{group_id}/users/{user_id}",
+            headers=self.headers,
+            json={"roleId": role_id}
+        )
+        return r.status_code == 200
+
+    @app_commands.command(name="promote_group", description="Promuovi un utente a un ruolo del gruppo usando il nome del ruolo.")
+    @app_commands.describe(username="Username Roblox", group_id="ID del gruppo", role_name="Nome del ruolo target")
+    async def promote_group(self, interaction: discord.Interaction, username: str, group_id: int, role_name: str):
+        await interaction.response.defer()
+        user_id = self.get_user_id(username)
+        if not user_id:
+            await interaction.followup.send("❌ Username non valido.")
+            return
+
+        roles = self.get_group_roles(group_id)
+        target_role = next((r for r in roles if r["name"].lower() == role_name.lower()), None)
+
+        if not target_role:
+            await interaction.followup.send("❌ Ruolo non trovato.")
+            return
+
+        success = self.set_user_role(group_id, user_id, target_role["id"])
+        if success:
+            await interaction.followup.send(f"✅ {username} è stato promosso al ruolo **{target_role['name']}**.")
+        else:
+            await interaction.followup.send("❌ Errore nella promozione. Verifica i permessi e il cookie.")
+
 
 # 🚀 Avvio
 if __name__ == "__main__":
