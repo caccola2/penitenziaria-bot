@@ -7,7 +7,7 @@ from threading import Thread
 import unicodedata
 import requests
 
-# 🌐 Web server
+# FLASK
 app = Flask('')
 
 @app.route('/')
@@ -19,7 +19,7 @@ def run():
 
 Thread(target=run).start()
 
-# ⚙️ Setup bot
+# SETUP BOT
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
@@ -30,7 +30,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 @bot.event
 async def on_ready():
     await bot.wait_until_ready()
-    await bot.add_cog(GroupManagement(bot))  # 👈 Caricamento comandi Roblox
+    await bot.add_cog(GroupManagement(bot))  
     try:
         synced = await bot.tree.sync()
         print(f"[DEBUG] Comandi slash sincronizzati: {len(synced)}")
@@ -43,6 +43,7 @@ def normalizza(testo):
     return ''.join(c for c in unicodedata.normalize('NFD', testo)
                    if unicodedata.category(c) != 'Mn')
 
+#FUNZIONE EMOJI
 def trova_emoji(nome_qualifica, emoji_lista):
     nome_norm = normalizza(nome_qualifica)
     for emoji in emoji_lista:
@@ -54,6 +55,7 @@ def trova_emoji(nome_qualifica, emoji_lista):
             return str(emoji)
     return ""
 
+# FUNZIONE RUOLI
 def trova_ruolo(nome, ruoli):
     nome_norm = normalizza(nome)
     for r in ruoli:
@@ -64,6 +66,9 @@ def trova_ruolo(nome, ruoli):
         if nome_norm in n and not n.startswith("allievo"):
             return r
     return None
+#----------------------------------------------------------------------------------------------------------------------------
+
+# ✅ ATTIVITA' ISTITUZIONALE
 
 @bot.tree.command(name="attivita-istituzionale", description="Invia un'attività programmata.")
 @app_commands.describe(attivita="Nome dell'attività", luogo="Luogo di incontro", data_orario="Data e ora")
@@ -95,8 +100,10 @@ async def attivita(interaction: discord.Interaction, attivita: str, luogo: str, 
     await msg.add_reaction("✅")
     await channel.send("||<@&791772896736313371>||")
     await interaction.response.send_message("Attività inviata!", ephemeral=True)
+#----------------------------------------------------------------------------------------------------------------------------
 
-# ✅ GESTIONE GRUPPO ROBLOX
+
+# ✅ GRUPPO ROBLOX
 class GroupManagement(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -171,7 +178,9 @@ class GroupManagement(commands.Cog):
             await interaction.followup.send(f"🔻 {username} è stato degradato al ruolo **{new_role['name']}**.")
         else:
             await interaction.followup.send("❌ Errore nella degradazione.")
+#----------------------------------------------------------------------------------------------------------------------------
 
+# ✅ PROMOZIONE
 
 class PromozioneForm(ui.Modal, title="📈 Form Promozione Operatore"):
     qualifica_operatore = ui.TextInput(label="Qualifica Operatore", style=TextStyle.short)
@@ -230,8 +239,9 @@ async def promozione_operatore(interaction: Interaction, utente: discord.Member)
         await interaction.response.send_message("❌ Permessi insufficienti.", ephemeral=True)
         return
     await interaction.response.send_modal(PromozioneForm(utente=utente))
+#----------------------------------------------------------------------------------------------------------------------------
 
-# ✅ Modal: trasferimento
+# ✅ TRASFERIMENTO
 class TrasferimentoForm(ui.Modal, title="🔄 Form Trasferimento Operatore"):
     qualifica_operatore = ui.TextInput(label="Qualifica Operatore", style=TextStyle.short)
     reparto_attuale = ui.TextInput(label="Reparto attuale (NTP o SPS)", style=TextStyle.short)
@@ -300,8 +310,9 @@ async def trasferimento_operatore(interaction: Interaction, utente: discord.Memb
         await interaction.response.send_message("❌ Permessi insufficienti.", ephemeral=True)
         return
     await interaction.response.send_modal(TrasferimentoForm(utente=utente))
+#----------------------------------------------------------------------------------------------------------------------------
 
-# ✅ Modal: rimprovero
+# ✅ RIMPROVERO
 class RimproveroForm(ui.Modal, title="⚠️ Form Rimprovero Operatore"):
     qualifica_operatore = ui.TextInput(label="Qualifica Operatore", style=TextStyle.short)
     motivazione = ui.TextInput(label="Motivazione del rimprovero", style=TextStyle.paragraph)
@@ -341,8 +352,9 @@ async def rimprovero_operatore(interaction: Interaction, utente: discord.Member)
         await interaction.response.send_message("❌ Permessi insufficienti.", ephemeral=True)
         return
     await interaction.response.send_modal(RimproveroForm(utente=utente))
+#----------------------------------------------------------------------------------------------------------------------------
 
-# ✅ Sospensione cautelare
+# ✅ SOSPENSIONE CAUTELARE
 class SospensioneCautelareForm(ui.Modal, title="⛔ Form Sospensione Cautelare"):
     qualifica_operatore = ui.TextInput(label="Qualifica Operatore", style=TextStyle.short)
     motivazione = ui.TextInput(label="Motivazione (opzionale)", style=TextStyle.paragraph, required=False)
@@ -401,8 +413,9 @@ async def sospensione_cautelare(interaction: Interaction, utente: discord.Member
         await interaction.response.send_message("❌ Permessi insufficienti.", ephemeral=True)
         return
     await interaction.response.send_modal(SospensioneCautelareForm(utente=utente))
+#----------------------------------------------------------------------------------------------------------------------------
 
-# ✅ Interdizione operatore
+# ✅ INTERDIZIONE OPERATORE
 class InterdizioneForm(ui.Modal, title="⛔ Form Interdizione Operatore"):
     qualifica_operatore = ui.TextInput(label="Qualifica Operatore", style=TextStyle.short)
     motivazione = ui.TextInput(label="Motivazione dell'interdizione", style=TextStyle.paragraph)
@@ -450,9 +463,9 @@ async def interdizione_operatore(interaction: Interaction, utente: discord.Membe
         await interaction.response.send_message("❌ Permessi insufficienti.", ephemeral=True)
         return
     await interaction.response.send_modal(InterdizioneForm(utente=utente))
+#----------------------------------------------------------------------------------------------------------------------------
 
-
-# ✅ Destituzione operatore
+# ✅ DESTITUZIONE OPERATORE
 class DestituzioneForm(ui.Modal, title="📤 Form Destituzione Operatore"):
     qualifica_operatore = ui.TextInput(label="Qualifica Operatore", style=TextStyle.short)
     motivazione = ui.TextInput(label="Motivazione della destituzione", style=TextStyle.paragraph)
@@ -500,9 +513,9 @@ async def destituzione_operatore(interaction: Interaction, utente: discord.Membe
         await interaction.response.send_message("❌ Permessi insufficienti.", ephemeral=True)
         return
     await interaction.response.send_modal(DestituzioneForm(utente=utente))
+#----------------------------------------------------------------------------------------------------------------------------
 
-
-# ✅ /pec
+# ✅ /PEC
 class PecForm(ui.Modal, title="Invio Comunicazione PEC"):
     oggetto = ui.TextInput(
         label="Oggetto",
@@ -557,9 +570,9 @@ async def pec(interaction: Interaction, destinatario: discord.Member):
         return
 
     await interaction.response.send_modal(PecForm(destinatario))
+#----------------------------------------------------------------------------------------------------------------------------
 
-
-# ✅ Reintegro
+# ✅ REINTEGRO
 class ReintegroForm(ui.Modal, title="Form Reintegro Operatore"):
     reparto_assegnazione = ui.TextInput(label="Reparto di Assegnazione", style=TextStyle.short)
 
@@ -607,9 +620,9 @@ async def reintegro_operatore(interaction: Interaction, utente: discord.Member):
         await interaction.response.send_message("❌ Permessi insufficienti.", ephemeral=True)
         return
     await interaction.response.send_modal(ReintegroForm(utente=utente))
+#----------------------------------------------------------------------------------------------------------------------------
 
-
-# ✅ Annuncio GOM corretto
+# ✅ ANNUCIO GOM
 RUOLI_AUTORIZZATI = [823977586308022294, 928416557141458985]
 
 class GOMAnnuncioForm(ui.Modal, title="Annuncio GOM"):
@@ -640,7 +653,7 @@ async def gom_annuncio(interaction: Interaction):
         await interaction.response.send_message("🚫 Permessi insufficienti.", ephemeral=True)
         return
     await interaction.response.send_modal(GOMAnnuncioForm(interaction.channel))
-
+#----------------------------------------------------------------------------------------------------------------------------
 
 # 🚀 Avvio bot
 if __name__ == "__main__":
