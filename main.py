@@ -171,7 +171,9 @@ class GroupManagement(commands.Cog):
             await interaction.followup.send(f"🔻 {username} è stato degradato al ruolo **{new_role['name']}**.")
         else:
             await interaction.followup.send("❌ Errore nella degradazione.")
-lass PromozioneForm(ui.Modal, title="📈 Form Promozione Operatore"):
+
+
+class PromozioneForm(ui.Modal, title="📈 Form Promozione Operatore"):
     qualifica_operatore = ui.TextInput(label="Qualifica Operatore", style=TextStyle.short)
     nuova_qualifica = ui.TextInput(label="Qualifica da attestare", style=TextStyle.short)
     motivazione = ui.TextInput(label="Motivazione promozione (opzionale)", style=TextStyle.paragraph, required=False)
@@ -605,10 +607,6 @@ async def reintegro_operatore(interaction: Interaction, utente: discord.Member):
         await interaction.response.send_message("❌ Permessi insufficienti.", ephemeral=True)
         return
     await interaction.response.send_modal(ReintegroForm(utente=utente))
-
-
-
-
 
 
 # ✅ Annuncio GOM corretto
