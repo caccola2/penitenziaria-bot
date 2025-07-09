@@ -112,57 +112,61 @@ class GroupManagement(commands.Cog):
             "Cookie": f".ROBLOSECURITY={self.roblosecurity}",
             "Content-Type": "application/json"
         }
+        self.group_id = 8730810  # ID fisso del gruppo Roblox
 
     def get_user_id(self, username):
         r = requests.get(f"https://api.roblox.com/users/get-by-username?username={username}")
         data = r.json()
         return data.get("Id")
 
-    def get_group_roles(self, group_id):
-        r = requests.get(f"https://groups.roblox.com/v1/groups/{group_id}/roles")
+    def get_group_roles(self):
+        r = requests.get(f"https://groups.roblox.com/v1/groups/{self.group_id}/roles")
         return r.json().get("roles", [])
 
-    def set_user_role(self, group_id, user_id, role_id):
+    def set_user_role(self, user_id, role_id):
         r = requests.patch(
-            f"https://groups.roblox.com/v1/groups/{group_id}/users/{user_id}",
+            f"https://groups.roblox.com/v1/groups/{self.group_id}/users/{user_id}",
             headers=self.headers,
             json={"roleId": role_id}
         )
         return r.status_code == 200
 
-    @app_commands.command(name="promote_group", description="Promuovi un utente a un ruolo del gruppo usando il nome del ruolo.")
-    @app_commands.describe(username="Username Roblox", group_id="ID del gruppo", role_name="Nome del ruolo target")
-    async def promote_group(self, interaction: discord.Interaction, username: str, group_id: int, role_name: str):
+    @app_commands.command(name="promote_group", description="Promuovi un utente nel gruppo Roblox.")
+    @app_commands.describe(username="Username Roblox", role_name="Nome del ruolo target")
+    async def promote_group(self, interaction: discord.Interaction, username: str, role_name: str):
         await interaction.response.defer()
+
         user_id = self.get_user_id(username)
         if not user_id:
             await interaction.followup.send("❌ Username non valido.")
             return
 
-        roles = self.get_group_roles(group_id)
+        roles = self.get_group_roles()
         target_role = next((r for r in roles if r["name"].lower() == role_name.lower()), None)
 
         if not target_role:
             await interaction.followup.send("❌ Ruolo non trovato.")
             return
 
-        success = self.set_user_role(group_id, user_id, target_role["id"])
+        success = self.set_user_role(user_id, target_role["id"])
         if success:
             await interaction.followup.send(f"✅ {username} è stato promosso al ruolo **{target_role['name']}**.")
         else:
             await interaction.followup.send("❌ Errore nella promozione. Verifica i permessi e il cookie.")
 
-    @app_commands.command(name="demote_group", description="Degrada un utente a un ruolo inferiore.")
-    @app_commands.describe(username="Username Roblox", group_id="ID del gruppo", role_name="Ruolo attuale")
-    async def demote_group(self, interaction: discord.Interaction, username: str, group_id: int, role_name: str):
+    @app_commands.command(name="demote_group", description="Degrada un utente nel gruppo Roblox.")
+    @app_commands.describe(username="Username Roblox", role_name="Ruolo attuale")
+    async def demote_group(self, interaction: discord.Interaction, username: str, role_name: str):
         await interaction.response.defer()
+
         user_id = self.get_user_id(username)
         if not user_id:
             await interaction.followup.send("❌ Username non valido.")
             return
 
-        roles = sorted(self.get_group_roles(group_id), key=lambda x: x["rank"])
+        roles = sorted(self.get_group_roles(), key=lambda x: x["rank"])
         current_role = next((r for r in roles if r["name"].lower() == role_name.lower()), None)
+
         if not current_role:
             await interaction.followup.send("❌ Ruolo attuale non trovato.")
             return
@@ -173,7 +177,7 @@ class GroupManagement(commands.Cog):
             return
 
         new_role = roles[current_index - 1]
-        success = self.set_user_role(group_id, user_id, new_role["id"])
+        success = self.set_user_role(user_id, new_role["id"])
         if success:
             await interaction.followup.send(f"🔻 {username} è stato degradato al ruolo **{new_role['name']}**.")
         else:
